@@ -1,0 +1,620 @@
+/* Expense Management - Main Styles */
+
+:root {
+  --sidebar-width: 260px;
+  --header-height: 64px;
+  --expense-color: #dc3545;
+  --income-color: #198754;
+  --balance-color: #0d6efd;
+  --bank-color: #6f42c1;
+  --bg-body: #f4f6f9;
+  --card-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.08);
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #cbd5e1;
+  --sidebar-active: #0d6efd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Sidebar */
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  z-index: 1040;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+.app-sidebar .brand {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-sidebar .brand h1 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.app-sidebar .brand .subtitle {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 0.25rem 0 0;
+}
+
+.app-sidebar .nav-link {
+  color: var(--sidebar-text);
+  padding: 0.7rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+  font-size: 0.925rem;
+}
+
+.app-sidebar .nav-link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.app-sidebar .nav-link.active {
+  color: #fff;
+  background: rgba(13, 110, 253, 0.15);
+  border-left-color: var(--sidebar-active);
+}
+
+.app-sidebar .nav-link i {
+  font-size: 1.15rem;
+  width: 1.4rem;
+  text-align: center;
+}
+
+.app-sidebar .sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Main content */
+.app-main {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+}
+
+.app-header {
+  background: #fff;
+  height: var(--header-height);
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.app-content {
+  padding: 1.5rem;
+}
+
+.page-section {
+  display: none;
+}
+
+.page-section.active {
+  display: block;
+}
+
+/* Stat cards */
+.stat-card {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  transition: transform 0.15s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-card .stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0.85;
+}
+
+.stat-card .stat-value {
+  font-size: 1.65rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0;
+}
+
+.stat-card.income {
+  border-left: 4px solid var(--income-color);
+}
+
+.stat-card.expense {
+  border-left: 4px solid var(--expense-color);
+}
+
+.stat-card.balance {
+  border-left: 4px solid var(--balance-color);
+}
+
+.stat-card.bank {
+  border-left: 4px solid var(--bank-color);
+}
+
+.stat-card .card-body {
+  padding: 1.15rem 1.25rem;
+}
+
+.text-income { color: var(--income-color) !important; }
+.text-expense { color: var(--expense-color) !important; }
+.text-balance { color: var(--balance-color) !important; }
+
+/* Category summary cards */
+.category-card {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: var(--card-shadow);
+  text-align: center;
+  transition: box-shadow 0.2s;
+}
+
+.category-card:hover {
+  box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.12);
+}
+
+.category-card .cat-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.04em;
+}
+
+.category-card .cat-amount {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 0.35rem;
+}
+
+.category-card .cat-count {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* Cards */
+.card-panel {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: var(--card-shadow);
+}
+
+.card-panel .card-header {
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 600;
+  padding: 0.9rem 1.25rem;
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+/* Tables */
+.table-actions .btn {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.8rem;
+}
+
+.table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table td {
+  vertical-align: middle;
+  font-size: 0.9rem;
+}
+
+.amount-expense {
+  color: var(--expense-color);
+  font-weight: 600;
+}
+
+.amount-income {
+  color: var(--income-color);
+  font-weight: 600;
+}
+
+.badge-category {
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+/* Month selector */
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.month-nav .month-label {
+  font-weight: 600;
+  font-size: 1.05rem;
+  min-width: 160px;
+  text-align: center;
+}
+
+/* Excel View */
+.excel-view-wrap {
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem;
+  overflow-x: auto;
+}
+
+.excel-sheet {
+  min-width: 700px;
+}
+
+.excel-sheet .sheet-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1.5rem;
+  color: #1e293b;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.75rem;
+}
+
+.excel-categories {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.excel-cat-box {
+  border: 1.5px solid #94a3b8;
+  border-radius: 0.25rem;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.excel-cat-box .excel-cat-header {
+  background: #e2e8f0;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  padding: 0.5rem;
+  border-bottom: 1.5px solid #94a3b8;
+}
+
+.excel-cat-box .excel-cat-body {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  font-family: "Consolas", "Courier New", monospace;
+}
+
+.excel-cat-box .excel-entry {
+  padding: 0.2rem 0.35rem;
+  border-bottom: 1px dotted #e2e8f0;
+}
+
+.excel-cat-box .excel-cat-total {
+  background: #d1e7dd;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.5rem;
+  border-top: 1.5px solid #94a3b8;
+  font-size: 0.9rem;
+}
+
+.excel-grand-total {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 0.35rem;
+  text-align: center;
+  padding: 0.85rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+
+.excel-income-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.excel-bank-section {
+  margin-top: 1.5rem;
+  border: 1.5px solid #94a3b8;
+  border-radius: 0.25rem;
+  padding: 1rem;
+}
+
+.excel-bank-section h5 {
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+/* Chart containers */
+.chart-container {
+  position: relative;
+  height: 280px;
+}
+
+/* Backup status */
+.backup-status-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+}
+
+.backup-status-item:last-child {
+  border-bottom: none;
+}
+
+.backup-status-item .label {
+  color: #64748b;
+}
+
+.backup-status-item .value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Toast container */
+.toast-container {
+  z-index: 1100;
+}
+
+/* Storage warning banner */
+.storage-banner {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: #6d4c00;
+}
+
+/* Last update date (Excel-style) */
+.last-update-box {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.55rem 1rem;
+  box-shadow: var(--card-shadow);
+}
+
+.last-update-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+}
+
+.last-update-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 0.1rem;
+}
+
+.last-update-input {
+  border: none;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #1e293b;
+  padding-left: 0;
+  padding-right: 0;
+  max-width: 11rem;
+  background: transparent;
+}
+
+.last-update-input:focus {
+  box-shadow: none;
+  background: #f8fafc;
+  border-radius: 0.25rem;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #94a3b8;
+}
+
+.empty-state i {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+/* Sortable headers */
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable:hover {
+  color: var(--balance-color);
+}
+
+.sortable .sort-icon {
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+/* Form validation */
+.was-validated .form-control:invalid,
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+/* Settings toggle */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.setting-row:last-child {
+  border-bottom: none;
+}
+
+.setting-row .setting-info h6 {
+  margin: 0;
+  font-weight: 600;
+}
+
+.setting-row .setting-info p {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* Calculation box */
+.calc-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.calc-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  font-size: 0.95rem;
+}
+
+.calc-row.total {
+  border-top: 2px solid #cbd5e1;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+/* Preview modal table */
+.import-preview-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.import-preview-stats .stat {
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.import-preview-stats .stat .num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.import-preview-stats .stat .lbl {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+/* Demo badge */
+.demo-badge {
+  font-size: 0.7rem;
+}
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1035;
+}
+
+.sidebar-overlay.show {
+  display: block;
+}
+
+/* Negative balance */
+.balance-negative {
+  color: var(--expense-color) !important;
+}
+
+.balance-positive {
+  color: var(--income-color) !important;
+}
+
+/* Action toolbar */
+.action-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Report cards */
+.report-metric {
+  text-align: center;
+  padding: 1rem;
+}
+
+.report-metric .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.report-metric .label {
+  font-size: 0.8rem;
+  color: #64748b;
+  text-transform: uppercase;
+}

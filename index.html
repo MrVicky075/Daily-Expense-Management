@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Personal Monthly Expense Tracker - Expense Management">
+  <title>Expense Management — Personal Monthly Expense Tracker</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- App CSS -->
+  <link href="css/style.css" rel="stylesheet">
+  <link href="css/responsive.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="brand">
+      <h1><i class="bi bi-wallet2 me-2"></i>Expense Management</h1>
+      <p class="subtitle">Personal Monthly Expense Tracker</p>
+    </div>
+    <nav class="nav flex-column py-2">
+      <a class="nav-link active" href="#dashboard" data-page="dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a>
+      <a class="nav-link" href="#expenses" data-page="expenses"><i class="bi bi-receipt"></i> Expenses</a>
+      <a class="nav-link" href="#income" data-page="income"><i class="bi bi-cash-stack"></i> Income</a>
+      <a class="nav-link" href="#banks" data-page="banks"><i class="bi bi-bank"></i> Bank Accounts</a>
+      <a class="nav-link" href="#reports" data-page="reports"><i class="bi bi-bar-chart-line"></i> Reports</a>
+      <a class="nav-link" href="#excel" data-page="excel"><i class="bi bi-file-earmark-spreadsheet"></i> Excel View</a>
+      <a class="nav-link" href="#backup" data-page="backup"><i class="bi bi-cloud-arrow-down"></i> Backup & Restore</a>
+      <a class="nav-link" href="#settings" data-page="settings"><i class="bi bi-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="mb-1"><i class="bi bi-hdd me-1"></i> Local Browser Storage</div>
+      <div class="small">Data stays on this device only</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="app-main">
+    <header class="app-header">
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-secondary d-lg-none" id="btnToggleSidebar" type="button" aria-label="Menu">
+          <i class="bi bi-list"></i>
+        </button>
+        <h2 class="h5 mb-0" id="pageTitle">Dashboard</h2>
+        <span class="badge text-bg-warning demo-badge d-none" id="demoDataBanner">Demo Data</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <div class="d-none d-md-block">
+          <input type="search" class="form-control form-control-sm" id="globalSearch" placeholder="Search expenses…" style="min-width:180px">
+        </div>
+        <div class="month-nav">
+          <button class="btn btn-sm btn-outline-secondary" id="btnPrevMonth" title="Previous Month"><i class="bi bi-chevron-left"></i></button>
+          <select class="form-select form-select-sm" id="monthSelect" style="width:auto;min-width:150px;"></select>
+          <button class="btn btn-sm btn-outline-secondary" id="btnNextMonth" title="Next Month"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-content">
+
+      <!-- ===================== DASHBOARD ===================== -->
+      <section class="page-section active" id="page-dashboard">
+        <div class="storage-banner mb-3">
+          <i class="bi bi-info-circle me-1"></i>
+          <strong>Your data is stored locally in this browser.</strong>
+          Opening this site on another device will not show the same data. Use JSON backup or Excel export to transfer.
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+          <div class="last-update-box">
+            <label class="last-update-label" for="dashLastUpdateDate">Last update date</label>
+            <input type="date" class="form-control form-control-sm last-update-input" id="dashLastUpdateDate" title="Edit last update date">
+          </div>
+          <div class="text-muted small current-month-label"></div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-lg-3">
+            <div class="card stat-card income h-100">
+              <div class="card-body">
+                <div class="stat-label text-income"><i class="bi bi-arrow-down-circle me-1"></i> Total Income</div>
+                <p class="stat-value text-income" id="dashTotalIncome">₹ 0</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card stat-card expense h-100">
+              <div class="card-body">
+                <div class="stat-label text-expense"><i class="bi bi-arrow-up-circle me-1"></i> Total Expenses</div>
+                <p class="stat-value text-expense" id="dashTotalExpense">₹ 0</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card stat-card balance h-100">
+              <div class="card-body">
+                <div class="stat-label text-balance"><i class="bi bi-calculator me-1"></i> Balance</div>
+                <p class="stat-value" id="dashBalance">₹ 0</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card stat-card bank h-100">
+              <div class="card-body">
+                <div class="stat-label" style="color:#6f42c1"><i class="bi bi-bank me-1"></i> Bank Balance</div>
+                <p class="stat-value" id="dashBankBalance">₹ 0</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">Category Summary <small class="text-muted current-month-label"></small></h5>
+        </div>
+        <div class="row g-3 mb-4" id="categorySummaryCards"></div>
+
+        <div class="action-toolbar mb-4">
+          <button class="btn btn-danger" id="btnAddExpenseDash"><i class="bi bi-plus-lg me-1"></i> Add Expense</button>
+          <button class="btn btn-success" id="btnAddIncomeDash"><i class="bi bi-plus-lg me-1"></i> Add Income</button>
+          <button class="btn btn-primary" id="btnDownloadExcel"><i class="bi bi-file-earmark-excel me-1"></i> Download Excel</button>
+          <button class="btn btn-outline-secondary" id="btnExportJSON"><i class="bi bi-download me-1"></i> Export JSON</button>
+          <button class="btn btn-outline-secondary" id="btnImportJSON"><i class="bi bi-upload me-1"></i> Import JSON</button>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-lg-8">
+            <div class="card card-panel h-100">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent Expenses</span>
+                <a href="#expenses" class="small" data-page="expenses">View all</a>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="recentExpenseTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card card-panel h-100">
+              <div class="card-header">Backup Status</div>
+              <div class="card-body">
+                <div class="backup-status-item"><span class="label">Data Storage</span><span class="value" id="statusStorage">Local Browser</span></div>
+                <div class="backup-status-item"><span class="label">Last Saved</span><span class="value" id="statusLastSaved">—</span></div>
+                <div class="backup-status-item"><span class="label">Last Backup</span><span class="value" id="statusLastBackup">—</span></div>
+                <div class="backup-status-item"><span class="label">Automatic Backup</span><span class="value" id="statusAutoBackup">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card card-panel">
+              <div class="card-header">Category Expense</div>
+              <div class="card-body">
+                <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card card-panel">
+              <div class="card-header">Income vs Expense (6 months)</div>
+              <div class="card-body">
+                <div class="chart-container"><canvas id="incomeExpenseChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== EXPENSES ===================== -->
+      <section class="page-section" id="page-expenses">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <div>
+            <h5 class="mb-0">Expenses <small class="text-muted current-month-label"></small></h5>
+            <small class="text-muted" id="expenseCountLabel">0 records</small>
+          </div>
+          <button class="btn btn-danger" id="btnAddExpense"><i class="bi bi-plus-lg me-1"></i> Add Expense</button>
+        </div>
+
+        <div class="card card-panel mb-3">
+          <div class="card-body">
+            <form id="expenseFilterForm" class="row g-2 align-items-end" onsubmit="return false;">
+              <div class="col-md-3">
+                <label class="form-label small mb-1">Search</label>
+                <input type="search" class="form-control form-control-sm" id="expenseSearch" placeholder="Description, category, amount…">
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1">Category</label>
+                <select class="form-select form-select-sm" id="filterCategory"><option value="">All Categories</option></select>
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1">Bank</label>
+                <select class="form-select form-select-sm" id="filterBank"><option value="">All Accounts</option></select>
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1">Payment</label>
+                <select class="form-select form-select-sm" id="filterPayment"><option value="">All Methods</option></select>
+              </div>
+              <div class="col-6 col-md-1">
+                <label class="form-label small mb-1">From</label>
+                <input type="date" class="form-control form-control-sm" id="filterDateFrom">
+              </div>
+              <div class="col-6 col-md-1">
+                <label class="form-label small mb-1">To</label>
+                <input type="date" class="form-control form-control-sm" id="filterDateTo">
+              </div>
+              <div class="col-md-1">
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btnClearFilters">Clear</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card card-panel">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th class="sortable" data-sort="date">Date <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                    <th class="sortable" data-sort="category">Category <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                    <th>Description</th>
+                    <th class="sortable" data-sort="amount">Amount <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                    <th>Payment</th>
+                    <th>Account</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="expenseTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== INCOME ===================== -->
+      <section class="page-section" id="page-income">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <h5 class="mb-0">Income <small class="text-muted current-month-label"></small></h5>
+          <button class="btn btn-success" id="btnAddIncome"><i class="bi bi-plus-lg me-1"></i> Add Income</button>
+        </div>
+        <div class="card card-panel">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Account</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="incomeTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== BANKS ===================== -->
+      <section class="page-section" id="page-banks">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <h5 class="mb-0">Bank Accounts</h5>
+          <button class="btn btn-primary" id="btnAddBank"><i class="bi bi-plus-lg me-1"></i> Add Account</button>
+        </div>
+        <div class="row g-3 mb-4" id="bankCards"></div>
+        <div class="card card-panel">
+          <div class="card-header">Account Details</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Account</th>
+                    <th>Opening Balance</th>
+                    <th>Current Balance</th>
+                    <th>Updated</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="bankTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <p class="small text-muted mt-2">
+          Current balance = Opening balance + income credited − expenses debited for that account.
+        </p>
+      </section>
+
+      <!-- ===================== REPORTS ===================== -->
+      <section class="page-section" id="page-reports">
+        <h5 class="mb-3">Reports &amp; Calculations <small class="text-muted current-month-label"></small></h5>
+        <div class="row g-3 mb-4">
+          <div class="col-lg-4">
+            <div class="card card-panel h-100">
+              <div class="card-header">CALCULATION</div>
+              <div class="card-body">
+                <div class="calc-box">
+                  <div class="calc-row"><span>Total Income</span><span id="calcTotalIncome">₹ 0</span></div>
+                  <div class="calc-row"><span>Total Expenses</span><span id="calcTotalExpense">₹ 0</span></div>
+                  <div class="calc-row total"><span>Balance</span><span id="calcBalance">₹ 0</span></div>
+                  <div class="calc-row mt-2"><span>Total Bank Balance</span><span id="calcBankBalance">₹ 0</span></div>
+                  <div class="calc-row"><span>Cash Difference</span><span id="calcCashDiff">₹ 0</span></div>
+                </div>
+                <p class="small text-muted mt-2 mb-0">Balance = Total Income − Total Expenses</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card card-panel h-100">
+              <div class="card-header">Category Summary</div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table mb-0">
+                    <thead><tr><th>Category</th><th>Amount</th></tr></thead>
+                    <tbody id="categorySummaryTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card card-panel h-100">
+              <div class="card-header">Daily Expense Trend</div>
+              <div class="card-body">
+                <div class="chart-container"><canvas id="dailyExpenseChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-panel">
+          <div class="card-header">Daily Summary</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Total Expense</th>
+                    <th>Total Income</th>
+                    <th>Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="dailySummaryTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== EXCEL VIEW ===================== -->
+      <section class="page-section" id="page-excel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <h5 class="mb-0">Excel View</h5>
+          <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print</button>
+        </div>
+        <div class="excel-view-wrap">
+          <div class="excel-sheet">
+            <div class="sheet-title" id="excelSheetTitle">SEPTEMBER 2026</div>
+            <div class="excel-categories" id="excelCategoryGrid"></div>
+            <div class="excel-grand-total" id="excelGrandTotal">TOTAL EXPENSE = 0</div>
+            <div class="excel-income-row" id="excelIncomeGrid"></div>
+            <div class="excel-bank-section" id="excelBankSection"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== BACKUP ===================== -->
+      <section class="page-section" id="page-backup">
+        <h5 class="mb-3">Backup &amp; Restore</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card card-panel h-100">
+              <div class="card-header"><i class="bi bi-file-earmark-excel me-2"></i>Excel</div>
+              <div class="card-body">
+                <p class="text-muted">Export the selected month to a multi-sheet Excel workbook, or import an Excel file previously exported by this app.</p>
+                <div class="action-toolbar">
+                  <button class="btn btn-primary" id="btnDownloadExcel2"><i class="bi bi-download me-1"></i> Download Excel</button>
+                  <button class="btn btn-outline-primary" id="btnImportExcel"><i class="bi bi-upload me-1"></i> Import Excel</button>
+                </div>
+                <input type="file" id="excelImportFile" accept=".xlsx,.xls" class="d-none">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card card-panel h-100">
+              <div class="card-header"><i class="bi bi-filetype-json me-2"></i>JSON Backup</div>
+              <div class="card-body">
+                <p class="text-muted">Full application backup for restore after data loss or transfer to another device.</p>
+                <div class="action-toolbar">
+                  <button class="btn btn-success" id="btnExportJSON2"><i class="bi bi-download me-1"></i> Export JSON Backup</button>
+                  <button class="btn btn-outline-success" id="btnImportJSON2"><i class="bi bi-upload me-1"></i> Import JSON Backup</button>
+                </div>
+                <input type="file" id="jsonImportFile" accept=".json,application/json" class="d-none">
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card card-panel">
+              <div class="card-header">Automatic Daily Backup</div>
+              <div class="card-body">
+                <div class="alert alert-warning mb-3">
+                  <strong>Browser limitation:</strong> A static website cannot silently download files when the browser or this tab is closed.
+                  Automatic backup runs when you open the app, if today's backup has not been created yet.
+                </div>
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <h6>Automatic Daily Backup</h6>
+                    <p>Download a JSON backup once per day when the site is opened.</p>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="autoBackupToggle" checked>
+                  </div>
+                </div>
+                <div class="backup-status-item"><span class="label">Last automatic backup</span><span class="value" id="settingsLastAutoBackup">—</span></div>
+                <div class="backup-status-item"><span class="label">Next backup</span><span class="value" id="settingsNextBackup">—</span></div>
+                <button class="btn btn-outline-secondary btn-sm mt-3" id="btnManualAutoBackup"><i class="bi bi-download me-1"></i> Download Backup Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== SETTINGS ===================== -->
+      <section class="page-section" id="page-settings">
+        <h5 class="mb-3">Settings</h5>
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card card-panel mb-3">
+              <div class="card-header">Categories</div>
+              <div class="card-body">
+                <div class="input-group mb-3">
+                  <input type="text" class="form-control" id="newCategoryName" placeholder="New category name">
+                  <button class="btn btn-outline-primary" type="button" id="btnAddCategory">Add</button>
+                </div>
+                <ul class="list-group list-group-flush" id="categoryList"></ul>
+              </div>
+            </div>
+            <div class="card card-panel">
+              <div class="card-header">Income Types</div>
+              <div class="card-body">
+                <div class="input-group mb-3">
+                  <input type="text" class="form-control" id="newIncomeTypeName" placeholder="New income type">
+                  <button class="btn btn-outline-success" type="button" id="btnAddIncomeType">Add</button>
+                </div>
+                <ul class="list-group list-group-flush" id="incomeTypeList"></ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card card-panel mb-3">
+              <div class="card-header">Data Management</div>
+              <div class="card-body">
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <h6>Clear Sample Data</h6>
+                    <p>Remove demo expenses/income from the first visit. Keep your real entries.</p>
+                  </div>
+                  <button class="btn btn-warning btn-sm" id="btnClearSample">Clear Sample Data</button>
+                </div>
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <h6 class="text-danger">Clear All Data</h6>
+                    <p>Permanently remove all locally stored expense data from this browser.</p>
+                  </div>
+                  <button class="btn btn-danger btn-sm" id="btnClearAllData">Clear All Data</button>
+                </div>
+              </div>
+            </div>
+            <div class="card card-panel">
+              <div class="card-header">Help &amp; Storage Notes</div>
+              <div class="card-body">
+                <ul class="mb-0 ps-3">
+                  <li class="mb-2">Data is stored in <strong>browser LocalStorage</strong> on this device only.</li>
+                  <li class="mb-2">Clearing browser data / site data will erase your expenses.</li>
+                  <li class="mb-2">Export JSON backups regularly for safety.</li>
+                  <li class="mb-2">Automatic daily backup only runs when you open the website.</li>
+                  <li class="mb-2">To move data to another phone/PC: Export JSON → Import JSON on the other device.</li>
+                  <li>Host this folder on GitHub Pages or Netlify — no server required.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===================== MODALS ===================== -->
+
+  <!-- Expense Modal -->
+  <div class="modal fade" id="expenseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="expenseModalTitle">Add Expense</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="expenseForm" novalidate>
+            <input type="hidden" id="expenseId">
+            <div class="mb-3">
+              <label class="form-label" for="expenseDate">Date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="expenseDate" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="expenseCategory">Category <span class="text-danger">*</span></label>
+              <select class="form-select" id="expenseCategory" required></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="expenseAmount">Amount <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="expenseAmount" min="0.01" step="0.01" placeholder="0" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="expenseDescription">Description</label>
+              <input type="text" class="form-control" id="expenseDescription" placeholder="e.g. pizza">
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label" for="expensePayment">Payment Method</label>
+                <select class="form-select" id="expensePayment"></select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label" for="expenseBank">Bank Account</label>
+                <select class="form-select" id="expenseBank"></select>
+              </div>
+            </div>
+            <div class="mb-0">
+              <label class="form-label" for="expenseNotes">Notes</label>
+              <textarea class="form-control" id="expenseNotes" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="btnSaveExpense">Save Expense</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Income Modal -->
+  <div class="modal fade" id="incomeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="incomeModalTitle">Add Income</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="incomeForm" novalidate>
+            <input type="hidden" id="incomeId">
+            <div class="mb-3">
+              <label class="form-label" for="incomeDate">Date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="incomeDate" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="incomeType">Income Type <span class="text-danger">*</span></label>
+              <select class="form-select" id="incomeType" required></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="incomeAmount">Amount <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="incomeAmount" min="0.01" step="0.01" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="incomeDescription">Description</label>
+              <input type="text" class="form-control" id="incomeDescription">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="incomeBank">Bank Account</label>
+              <select class="form-select" id="incomeBank"></select>
+            </div>
+            <div class="mb-0">
+              <label class="form-label" for="incomeNotes">Notes</label>
+              <textarea class="form-control" id="incomeNotes" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="btnSaveIncome">Save Income</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bank Modal -->
+  <div class="modal fade" id="bankModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bankModalTitle">Add Bank Account</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="bankForm" novalidate>
+            <input type="hidden" id="bankId">
+            <div class="mb-3">
+              <label class="form-label" for="bankName">Account Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="bankName" placeholder="e.g. Yes Bank" required>
+            </div>
+            <div class="mb-0">
+              <label class="form-label" for="bankOpening">Opening Balance</label>
+              <input type="number" class="form-control" id="bankOpening" step="0.01" value="0">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btnSaveBank">Save Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmModalTitle">Confirm</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="confirmModalBody">Are you sure?</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" id="confirmModalCancel" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmModalOk">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JSON Import Preview Modal -->
+  <div class="modal fade" id="jsonImportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Restore this backup?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">A safety backup of your current data will be created first.</p>
+          <div class="import-preview-stats mb-3">
+            <div class="stat"><div class="num" id="jsonBackupExpCount">0</div><div class="lbl">Expenses</div></div>
+            <div class="stat"><div class="num" id="jsonBackupIncCount">0</div><div class="lbl">Income</div></div>
+            <div class="stat"><div class="num" id="jsonBackupBankCount">0</div><div class="lbl">Banks</div></div>
+            <div class="stat"><div class="num" id="jsonBackupCatCount">0</div><div class="lbl">Categories</div></div>
+          </div>
+          <div class="backup-status-item"><span class="label">Backup date</span><span class="value" id="jsonBackupDate">—</span></div>
+          <div class="backup-status-item"><span class="label">Version</span><span class="value" id="jsonBackupVersion">—</span></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="btnConfirmJSONRestore">Restore</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Excel Import Preview Modal -->
+  <div class="modal fade" id="excelImportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Import Excel Data?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">Current data will be safety-backed up, then replaced with imported records.</p>
+          <p class="fw-semibold mb-2">Records found:</p>
+          <div class="import-preview-stats">
+            <div class="stat"><div class="num" id="excelImportExpCount">0</div><div class="lbl">Expenses</div></div>
+            <div class="stat"><div class="num" id="excelImportIncCount">0</div><div class="lbl">Income</div></div>
+            <div class="stat"><div class="num" id="excelImportBankCount">0</div><div class="lbl">Bank Accounts</div></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btnConfirmExcelImport">Import Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+  <!-- Libraries (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- App scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/categories.js"></script>
+  <script src="js/expense.js"></script>
+  <script src="js/income.js"></script>
+  <script src="js/bank.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/excel.js"></script>
+  <script src="js/backup.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
