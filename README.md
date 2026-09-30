@@ -60,7 +60,7 @@ Use **Export JSON Backup** regularly.
 ## 4. How to Run
 
 1. Download or clone this repository.
-2. Open `expense-management/index.html` in Chrome, Edge, or Firefox.
+2. Open `index.html` in **Brave**, Chrome, Edge, or Firefox.
 
 Or use any static file server:
 

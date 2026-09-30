@@ -505,11 +505,12 @@
                 <input type="file" id="jsonImportFile" accept=".json,application/json" class="d-none">
                 <input type="file" id="jsonUploadToDataFile" accept=".json,application/json" class="d-none">
                 <div class="form-text" id="jsonBackupDesktopHelp">
-                  On computer (Chrome/Edge): click <strong>Choose Folder</strong> below and select the project <code>data</code> folder.
+                  Optional: <strong>Choose Folder</strong> works in Chrome / Edge / Brave (desktop).
+                  Otherwise files go to the <strong>Downloads</strong> folder.
                 </div>
                 <div class="form-text d-none" id="jsonBackupMobileHelp">
-                  On mobile: <strong>Download JSON</strong> saves to your phone Downloads / Files.
-                  Use <strong>Restore into App</strong> to pick a JSON file from your phone and restore it.
+                  On this device (including Brave mobile), files save to the <strong>Downloads</strong> folder.
+                  Use <strong>Restore into App</strong> to load a JSON file back.
                 </div>
               </div>
             </div>
@@ -520,7 +521,7 @@
               <div class="card-body">
                 <div class="alert alert-warning mb-3" id="backupBrowserAlert">
                   <strong>Note:</strong> Automatic backup runs only while this website tab is open.
-                  On mobile, backups download to your phone’s Downloads / Files folder.
+                  In Brave / Chrome / Edge, files go to <strong>Downloads</strong> (or a folder you choose on desktop).
                 </div>
                 <div class="setting-row">
                   <div class="setting-info">
@@ -550,8 +551,7 @@
                       </button>
                     </div>
                     <div class="form-text" id="backupLocationHelp">
-                      Computer (Chrome/Edge): select the project <strong>data</strong> folder.
-                      Mobile: files go to phone Downloads automatically.
+                      Files save to the Downloads folder by default.
                     </div>
                   </div>
                 </div>

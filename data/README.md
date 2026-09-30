@@ -2,11 +2,11 @@
 
 Store JSON backup files here.
 
-## How to use (Chrome / Edge)
+## How to use (Chrome / Edge / Brave)
 
 1. Open **Backup & Restore** in the app.
-2. Click **Choose Folder** and select this `data` folder.
-3. **Download / Export JSON** and **Automatic Daily Backup** will save files here.
-4. Use **Upload JSON to data folder** to copy a JSON file into this folder.
+2. On **desktop** Brave/Chrome/Edge: click **Choose Folder** and select this `data` folder (optional).
+3. On **mobile** (including Brave): use **Download JSON** — the file goes to your phone **Downloads** folder.
+4. Use **Restore into App** to pick a JSON file and restore it.
 
-> Note: A browser cannot write into this folder by itself. You must grant access once with **Choose Folder**.
+> Note: Mobile browsers cannot pick a custom folder. Downloads folder is used automatically.

@@ -202,9 +202,9 @@ const Utils = (() => {
   }
 
   function getMobileDownloadsLabel() {
-    if (/iPhone|iPad|iPod/i.test(navigator.userAgent || '')) return 'iPhone Files / Downloads';
-    if (/Android/i.test(navigator.userAgent || '')) return 'Phone Downloads';
-    return 'Device Downloads';
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent || '')) return 'Downloads';
+    if (/Android/i.test(navigator.userAgent || '')) return 'Downloads';
+    return 'Downloads';
   }
 
   async function ensureDirectoryPermission(handle, { interactive = false } = {}) {
@@ -216,8 +216,8 @@ const Utils = (() => {
   }
 
   async function chooseBackupDirectory() {
-    if (!supportsDirectoryPicker()) {
-      throw new Error('Folder picker is not supported in this browser. Use Chrome or Edge.');
+    if (!canUseFolderPicker()) {
+      return null;
     }
     const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
     await saveBackupDirectoryHandle(handle);
@@ -225,6 +225,9 @@ const Utils = (() => {
   }
 
   async function writeJSONToBackupFolder(obj, filename, { interactive = false } = {}) {
+    if (!canUseFolderPicker()) {
+      return { saved: false, reason: 'unsupported' };
+    }
     const handle = await getBackupDirectoryHandle();
     if (!handle) return { saved: false, reason: 'no-folder' };
 
@@ -239,9 +242,13 @@ const Utils = (() => {
   }
 
   async function writeBlobToBackupFolder(blob, filename, { interactive = false } = {}) {
+    if (!canUseFolderPicker()) {
+      return { saved: false, reason: 'unsupported' };
+    }
     let handle = await getBackupDirectoryHandle();
-    if (!handle && interactive && supportsDirectoryPicker()) {
+    if (!handle && interactive) {
       handle = await chooseBackupDirectory();
+      if (!handle) return { saved: false, reason: 'no-folder' };
     }
     if (!handle) return { saved: false, reason: 'no-folder' };
 
@@ -257,38 +264,38 @@ const Utils = (() => {
 
   async function uploadFileToBackupFolder(file, { interactive = true } = {}) {
     if (!file) return { saved: false, reason: 'no-file' };
+    if (!canUseFolderPicker()) return { saved: false, reason: 'unsupported' };
     const filename = file.name || `upload-${timestampForFilename()}.json`;
     return writeBlobToBackupFolder(file, filename, { interactive });
   }
 
   async function saveJSONBackup(obj, filename, { interactive = false } = {}) {
-    try {
-      const result = await writeJSONToBackupFolder(obj, filename, { interactive });
-      if (result.saved) return { ...result, method: 'folder' };
-      // If interactive and no folder yet, ask user to pick the project data folder
-      if (interactive && result.reason === 'no-folder' && supportsDirectoryPicker()) {
-        const handle = await chooseBackupDirectory();
-        const retry = await writeJSONToBackupFolder(obj, filename, { interactive: true });
-        if (retry.saved) {
-          return { ...retry, method: 'folder', folderName: handle.name };
+    // Only use custom folder when supported and already chosen — never force Chrome/Edge picker
+    if (canUseFolderPicker()) {
+      try {
+        const result = await writeJSONToBackupFolder(obj, filename, { interactive });
+        if (result.saved) return { ...result, method: 'folder' };
+      } catch (err) {
+        if (err && err.name === 'AbortError') {
+          // User cancelled folder dialog — still fall back to Downloads
+        } else {
+          console.warn('Folder save failed, falling back to Downloads', err);
         }
       }
-    } catch (err) {
-      if (err && err.name === 'AbortError') {
-        return { saved: false, reason: 'cancelled' };
-      }
-      console.warn('Folder save failed, falling back to download', err);
     }
     downloadJSON(obj, filename);
-    return { saved: true, method: 'download', folderName: 'Browser Downloads' };
+    return {
+      saved: true,
+      method: 'download',
+      folderName: getMobileDownloadsLabel()
+    };
   }
 
   function getBackupLocationLabel(settings) {
-    if (!canUseFolderPicker()) {
-      return getMobileDownloadsLabel();
+    if (canUseFolderPicker() && settings?.backupFolderName) {
+      return settings.backupFolderName;
     }
-    const name = settings?.backupFolderName;
-    return name ? name : 'Browser Downloads';
+    return getMobileDownloadsLabel();
   }
 
   function pad2(n) {

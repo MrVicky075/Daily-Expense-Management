@@ -25,13 +25,13 @@ const BackupModule = (() => {
 
     if (input) {
       input.value = folderOk && settings.backupFolderName ? settings.backupFolderName : '';
-      input.placeholder = folderOk ? 'Browser Downloads (default)' : Utils.getMobileDownloadsLabel();
+      input.placeholder = 'Downloads folder';
     }
     if (status) status.textContent = label;
     if (timeInput && document.activeElement !== timeInput) timeInput.value = time;
     if (timeStatus) timeStatus.textContent = time;
 
-    // Mobile / unsupported browsers: hide folder picker, keep Downloads flow
+    // Hide folder picker when not supported — always use Downloads instead
     if (chooseBtn) chooseBtn.classList.toggle('d-none', !folderOk);
     if (clearBtn) clearBtn.classList.toggle('d-none', !folderOk);
     if (uploadBtn) uploadBtn.classList.toggle('d-none', !folderOk);
@@ -39,29 +39,31 @@ const BackupModule = (() => {
     if (mobileHelp) mobileHelp.classList.toggle('d-none', folderOk);
     if (locationHelp) {
       locationHelp.textContent = folderOk
-        ? 'Computer (Chrome/Edge): select the project data folder. Backups and uploads save there.'
-        : 'On mobile, Choose Folder is not available. Download / Auto backup files go to your phone Downloads or Files app.';
+        ? 'Optional on Brave/Chrome/Edge desktop: Choose Folder. Otherwise files go to Downloads.'
+        : 'Brave / mobile: files save to your Downloads folder.';
     }
   }
 
   async function chooseBackupFolder() {
+    // If picker not available, silently keep Downloads — no Chrome/Edge error
+    if (!Utils.canUseFolderPicker()) {
+      refreshLocationUI();
+      return;
+    }
     try {
-      if (!Utils.canUseFolderPicker()) {
-        Utils.showToast(
-          'On mobile, folder pick is not available. Use Download JSON — the file saves to your phone Downloads / Files.',
-          'info'
-        );
+      const handle = await Utils.chooseBackupDirectory();
+      if (!handle) {
+        refreshLocationUI();
         return;
       }
-      const handle = await Utils.chooseBackupDirectory();
       Storage.updateSettings({ backupFolderName: handle.name });
       refreshLocationUI();
       Dashboard.renderBackupStatus();
-      Utils.showToast(`Backup location set to: ${handle.name}. Tip: choose the project "data" folder.`, 'success');
+      Utils.showToast(`Backup location set to: ${handle.name}`, 'success');
     } catch (err) {
       if (err && err.name === 'AbortError') return;
-      console.error(err);
-      Utils.showToast(err.message || 'Could not choose folder.', 'danger');
+      console.warn(err);
+      refreshLocationUI();
     }
   }
 
@@ -143,32 +145,21 @@ const BackupModule = (() => {
 
   async function uploadJsonToDataFolder(file) {
     if (!file) return;
+    // Not supported → no error; user should use Restore into App / Downloads flow
+    if (!Utils.canUseFolderPicker()) {
+      return;
+    }
     try {
-      if (!Utils.canUseFolderPicker()) {
-        Utils.showToast(
-          'On mobile, use Restore into App to pick a JSON file from your phone. Folder upload is for computer only.',
-          'info'
-        );
-        return;
-      }
-
       let handle = await Utils.getBackupDirectoryHandle();
       if (!handle) {
-        Utils.showToast('Select the project data folder…', 'info');
         handle = await Utils.chooseBackupDirectory();
+        if (!handle) return;
         Storage.updateSettings({ backupFolderName: handle.name });
         refreshLocationUI();
       }
 
       const result = await Utils.uploadFileToBackupFolder(file, { interactive: true });
-      if (!result.saved) {
-        if (result.reason === 'permission') {
-          Utils.showToast('Permission denied for folder. Choose the data folder again.', 'danger');
-        } else {
-          Utils.showToast('Could not upload file to data folder.', 'danger');
-        }
-        return;
-      }
+      if (!result.saved) return;
 
       Storage.updateSettings({ backupFolderName: result.folderName || Storage.getSettings().backupFolderName || 'data' });
       refreshLocationUI();
@@ -176,8 +167,7 @@ const BackupModule = (() => {
       Utils.showToast(`Uploaded "${result.filename}" into folder: ${result.folderName}`, 'success');
     } catch (err) {
       if (err && err.name === 'AbortError') return;
-      console.error(err);
-      Utils.showToast(err.message || 'Upload failed.', 'danger');
+      console.warn(err);
     }
   }
 
