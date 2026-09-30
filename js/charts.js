@@ -100,7 +100,7 @@ const ChartsModule = (() => {
             borderRadius: 4
           },
           {
-            label: 'Expense',
+            label: 'Expenses',
             data: expenseData,
             backgroundColor: 'rgba(220, 53, 69, 0.75)',
             borderRadius: 4
@@ -150,7 +150,7 @@ const ChartsModule = (() => {
       data: {
         labels,
         datasets: [{
-          label: 'Daily Expense',
+          label: 'Daily Expenses',
           data: values,
           borderColor: '#dc3545',
           backgroundColor: 'rgba(220, 53, 69, 0.12)',
@@ -178,7 +178,7 @@ const ChartsModule = (() => {
                 const day = items[0].label;
                 return Utils.formatDateDisplay(`${monthKey}-${Utils.pad2(day)}`);
               },
-              label: (ctx) => ` Expense: ${Utils.formatCurrency(ctx.raw)}`
+              label: (ctx) => ` Expenses: ${Utils.formatCurrency(ctx.raw)}`
             }
           }
         }

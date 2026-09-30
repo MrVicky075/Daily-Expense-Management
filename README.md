@@ -33,7 +33,7 @@ All data is stored in the **browser LocalStorage** on the current device.
 - Import Excel exported by this app
 - Export / import full JSON backups
 - Automatic daily backup (on open)
-- Clear sample data / clear all data (with confirmations)
+- Clear all data (with confirmations)
 - Responsive Bootstrap 5 UI (sidebar desktop, collapsible mobile)
 
 ---
@@ -174,11 +174,11 @@ If you keep the `expense-management/` subfolder, set the Pages root to that fold
 
 ---
 
-## Sample / Demo Data
+## Starting Fresh
 
-First visit loads sample September 2026 data matching the Excel reference (HOME, BIG-EXPENSE, FOOD, PETROL, IPO income, Yes Bank / ADC / JIO).
+First visit starts with **empty** expenses, income, and bank accounts (default categories and income types only).
 
-Use **Settings → Clear Sample Data** before entering real expenses, or **Clear All Data** for a full reset (double confirmation).
+Use **Settings → Clear All Data** for a full reset (double confirmation).
 
 ---
 

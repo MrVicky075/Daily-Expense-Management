@@ -28,6 +28,7 @@
       <a class="nav-link active" href="#dashboard" data-page="dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a>
       <a class="nav-link" href="#expenses" data-page="expenses"><i class="bi bi-receipt"></i> Expenses</a>
       <a class="nav-link" href="#income" data-page="income"><i class="bi bi-cash-stack"></i> Income</a>
+      <a class="nav-link" href="#rpd" data-page="rpd"><i class="bi bi-piggy-bank"></i> RPD</a>
       <a class="nav-link" href="#banks" data-page="banks"><i class="bi bi-bank"></i> Bank Accounts</a>
       <a class="nav-link" href="#reports" data-page="reports"><i class="bi bi-bar-chart-line"></i> Reports</a>
       <a class="nav-link" href="#excel" data-page="excel"><i class="bi bi-file-earmark-spreadsheet"></i> Excel View</a>
@@ -48,16 +49,20 @@
           <i class="bi bi-list"></i>
         </button>
         <h2 class="h5 mb-0" id="pageTitle">Dashboard</h2>
-        <span class="badge text-bg-warning demo-badge d-none" id="demoDataBanner">Demo Data</span>
       </div>
       <div class="d-flex align-items-center gap-2">
         <div class="d-none d-md-block">
-          <input type="search" class="form-control form-control-sm" id="globalSearch" placeholder="Search expenses…" style="min-width:180px">
+          <input type="search" class="form-control form-control-sm" id="globalSearch" placeholder="Search Expenses…" style="min-width:180px">
         </div>
-        <div class="month-nav">
-          <button class="btn btn-sm btn-outline-secondary" id="btnPrevMonth" title="Previous Month"><i class="bi bi-chevron-left"></i></button>
-          <select class="form-select form-select-sm" id="monthSelect" style="width:auto;min-width:150px;"></select>
-          <button class="btn btn-sm btn-outline-secondary" id="btnNextMonth" title="Next Month"><i class="bi bi-chevron-right"></i></button>
+        <div class="month-nav" title="Select month">
+          <span class="month-nav-icon" aria-hidden="true"><i class="bi bi-calendar3"></i></span>
+          <button class="btn btn-sm btn-outline-secondary month-nav-btn" id="btnPrevMonth" type="button" title="Previous Month" aria-label="Previous Month">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <select class="form-select form-select-sm month-nav-select" id="monthSelect" aria-label="Calendar month"></select>
+          <button class="btn btn-sm btn-outline-secondary month-nav-btn" id="btnNextMonth" type="button" title="Next Month" aria-label="Next Month">
+            <i class="bi bi-chevron-right"></i>
+          </button>
         </div>
       </div>
     </header>
@@ -66,12 +71,6 @@
 
       <!-- ===================== DASHBOARD ===================== -->
       <section class="page-section active" id="page-dashboard">
-        <div class="storage-banner mb-3">
-          <i class="bi bi-info-circle me-1"></i>
-          <strong>Your data is stored locally in this browser.</strong>
-          Opening this site on another device will not show the same data. Use JSON backup or Excel export to transfer.
-        </div>
-
         <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
           <div class="last-update-box">
             <label class="last-update-label" for="dashLastUpdateDate">Last update date</label>
@@ -123,9 +122,6 @@
         <div class="action-toolbar mb-4">
           <button class="btn btn-danger" id="btnAddExpenseDash"><i class="bi bi-plus-lg me-1"></i> Add Expense</button>
           <button class="btn btn-success" id="btnAddIncomeDash"><i class="bi bi-plus-lg me-1"></i> Add Income</button>
-          <button class="btn btn-primary" id="btnDownloadExcel"><i class="bi bi-file-earmark-excel me-1"></i> Download Excel</button>
-          <button class="btn btn-outline-secondary" id="btnExportJSON"><i class="bi bi-download me-1"></i> Export JSON</button>
-          <button class="btn btn-outline-secondary" id="btnImportJSON"><i class="bi bi-upload me-1"></i> Import JSON</button>
         </div>
 
         <div class="row g-3 mb-4">
@@ -169,7 +165,7 @@
         <div class="row g-3">
           <div class="col-md-6">
             <div class="card card-panel">
-              <div class="card-header">Category Expense</div>
+              <div class="card-header">Category Expenses</div>
               <div class="card-body">
                 <div class="chart-container"><canvas id="categoryChart"></canvas></div>
               </div>
@@ -177,7 +173,7 @@
           </div>
           <div class="col-md-6">
             <div class="card card-panel">
-              <div class="card-header">Income vs Expense (6 months)</div>
+              <div class="card-header">Income vs Expenses (6 months)</div>
               <div class="card-body">
                 <div class="chart-container"><canvas id="incomeExpenseChart"></canvas></div>
               </div>
@@ -258,6 +254,34 @@
           <h5 class="mb-0">Income <small class="text-muted current-month-label"></small></h5>
           <button class="btn btn-success" id="btnAddIncome"><i class="bi bi-plus-lg me-1"></i> Add Income</button>
         </div>
+
+        <div class="row g-3 mb-4" id="incomeDashCards">
+          <div class="col-4">
+            <div class="card stat-card income h-100">
+              <div class="card-body">
+                <div class="stat-label text-income"><i class="bi bi-phone me-1"></i> JIO</div>
+                <p class="stat-value text-income" id="incomeDashJio">₹ 0</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="card stat-card bank h-100">
+              <div class="card-body">
+                <div class="stat-label"><i class="bi bi-bank me-1"></i> YES</div>
+                <p class="stat-value" id="incomeDashYes">₹ 0</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="card stat-card balance h-100">
+              <div class="card-body">
+                <div class="stat-label"><i class="bi bi-wallet2 me-1"></i> ADC</div>
+                <p class="stat-value" id="incomeDashAdc">₹ 0</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="card card-panel">
           <div class="card-body p-0">
             <div class="table-responsive">
@@ -273,6 +297,67 @@
                   </tr>
                 </thead>
                 <tbody id="incomeTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== RPD ===================== -->
+      <section class="page-section" id="page-rpd">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <div>
+            <h5 class="mb-0">RPD <small class="text-muted current-month-label"></small></h5>
+            <small class="text-muted" id="rpdCountLabel">0 records</small>
+          </div>
+          <button class="btn btn-success" id="btnAddRpd"><i class="bi bi-plus-lg me-1"></i> Income</button>
+        </div>
+
+        <div class="card card-panel mb-3">
+          <div class="card-body">
+            <form id="rpdFilterForm" class="row g-2 align-items-end" onsubmit="return false;">
+              <div class="col-md-4">
+                <label class="form-label small mb-1">Search</label>
+                <input type="search" class="form-control form-control-sm" id="rpdSearch" placeholder="Notes, amount, type…">
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1">Type</label>
+                <select class="form-select form-select-sm" id="rpdFilterType">
+                  <option value="">All Types</option>
+                  <option value="Cash">Cash</option>
+                  <option value="YES">YES</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1">From</label>
+                <input type="date" class="form-control form-control-sm" id="rpdFilterDateFrom">
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1">To</label>
+                <input type="date" class="form-control form-control-sm" id="rpdFilterDateTo">
+              </div>
+              <div class="col-6 col-md-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btnClearRpdFilters">Clear</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card card-panel">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Notes</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="rpdTableBody"></tbody>
               </table>
             </div>
           </div>
@@ -306,7 +391,7 @@
           </div>
         </div>
         <p class="small text-muted mt-2">
-          Current balance = Opening balance + income credited − expenses debited for that account.
+          Current balance = Opening balance + Income credited − Expenses debited for that account.
         </p>
       </section>
 
@@ -344,7 +429,7 @@
           </div>
           <div class="col-lg-4">
             <div class="card card-panel h-100">
-              <div class="card-header">Daily Expense Trend</div>
+              <div class="card-header">Daily Expenses Trend</div>
               <div class="card-body">
                 <div class="chart-container"><canvas id="dailyExpenseChart"></canvas></div>
               </div>
@@ -359,7 +444,7 @@
                 <thead>
                   <tr>
                     <th>Date</th>
-                    <th>Total Expense</th>
+                    <th>Total Expenses</th>
                     <th>Total Income</th>
                     <th>Balance</th>
                   </tr>
@@ -409,12 +494,20 @@
             <div class="card card-panel h-100">
               <div class="card-header"><i class="bi bi-filetype-json me-2"></i>JSON Backup</div>
               <div class="card-body">
-                <p class="text-muted">Full application backup for restore after data loss or transfer to another device.</p>
-                <div class="action-toolbar">
-                  <button class="btn btn-success" id="btnExportJSON2"><i class="bi bi-download me-1"></i> Export JSON Backup</button>
-                  <button class="btn btn-outline-success" id="btnImportJSON2"><i class="bi bi-upload me-1"></i> Import JSON Backup</button>
+                <p class="text-muted mb-2">
+                  Download a JSON backup file, or upload a JSON file into the project <strong>data</strong> folder.
+                </p>
+                <div class="action-toolbar mb-2">
+                  <button class="btn btn-success" id="btnExportJSON2"><i class="bi bi-download me-1"></i> Download JSON</button>
+                  <button class="btn btn-outline-primary" id="btnUploadJsonToData"><i class="bi bi-folder-symlink me-1"></i> Upload to data folder</button>
+                  <button class="btn btn-outline-success" id="btnImportJSON2"><i class="bi bi-arrow-counterclockwise me-1"></i> Restore into App</button>
                 </div>
                 <input type="file" id="jsonImportFile" accept=".json,application/json" class="d-none">
+                <input type="file" id="jsonUploadToDataFile" accept=".json,application/json" class="d-none">
+                <div class="form-text">
+                  First click <strong>Choose Folder</strong> below and select this project’s <code>data</code> folder.
+                  Then Download / Upload / Auto backup all use that folder.
+                </div>
               </div>
             </div>
           </div>
@@ -423,20 +516,46 @@
               <div class="card-header">Automatic Daily Backup</div>
               <div class="card-body">
                 <div class="alert alert-warning mb-3">
-                  <strong>Browser limitation:</strong> A static website cannot silently download files when the browser or this tab is closed.
-                  Automatic backup runs when you open the app, if today's backup has not been created yet.
+                  <strong>Browser limitation:</strong> Automatic backup can run only while this website tab is open.
+                  Choose a time below — every day after that time, the backup is saved once into your selected folder.
                 </div>
                 <div class="setting-row">
                   <div class="setting-info">
                     <h6>Automatic Daily Backup</h6>
-                    <p>Download a JSON backup once per day when the site is opened.</p>
+                    <p>Every day at the selected time (while the app is open), save a JSON backup to the selected folder.</p>
                   </div>
                   <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="autoBackupToggle" checked>
                   </div>
                 </div>
+
+                <div class="row g-3 mt-1 mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label" for="autoBackupTime">Backup time (every day)</label>
+                    <input type="time" class="form-control" id="autoBackupTime" value="20:00">
+                    <div class="form-text">Runs once per day at or after this time.</div>
+                  </div>
+                  <div class="col-md-8">
+                    <label class="form-label" for="backupLocationInput">Default backup location</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="backupLocationInput" readonly placeholder="Browser Downloads (default)" aria-describedby="backupLocationHelp">
+                      <button class="btn btn-outline-primary" type="button" id="btnChooseBackupFolder" title="Choose folder">
+                        <i class="bi bi-folder2-open me-1"></i> Choose Folder
+                      </button>
+                      <button class="btn btn-outline-secondary" type="button" id="btnClearBackupFolder" title="Use browser Downloads">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                    <div class="form-text" id="backupLocationHelp">
+                      Select this project’s <strong>data</strong> folder (Chrome/Edge). Automatic and manual backups + uploads will save there.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="backup-status-item"><span class="label">Daily backup time</span><span class="value" id="settingsBackupTime">20:00</span></div>
                 <div class="backup-status-item"><span class="label">Last automatic backup</span><span class="value" id="settingsLastAutoBackup">—</span></div>
                 <div class="backup-status-item"><span class="label">Next backup</span><span class="value" id="settingsNextBackup">—</span></div>
+                <div class="backup-status-item"><span class="label">Save to</span><span class="value" id="settingsBackupLocation">Browser Downloads</span></div>
                 <button class="btn btn-outline-secondary btn-sm mt-3" id="btnManualAutoBackup"><i class="bi bi-download me-1"></i> Download Backup Now</button>
               </div>
             </div>
@@ -463,7 +582,7 @@
               <div class="card-header">Income Types</div>
               <div class="card-body">
                 <div class="input-group mb-3">
-                  <input type="text" class="form-control" id="newIncomeTypeName" placeholder="New income type">
+                  <input type="text" class="form-control" id="newIncomeTypeName" placeholder="New Income type">
                   <button class="btn btn-outline-success" type="button" id="btnAddIncomeType">Add</button>
                 </div>
                 <ul class="list-group list-group-flush" id="incomeTypeList"></ul>
@@ -476,15 +595,8 @@
               <div class="card-body">
                 <div class="setting-row">
                   <div class="setting-info">
-                    <h6>Clear Sample Data</h6>
-                    <p>Remove demo expenses/income from the first visit. Keep your real entries.</p>
-                  </div>
-                  <button class="btn btn-warning btn-sm" id="btnClearSample">Clear Sample Data</button>
-                </div>
-                <div class="setting-row">
-                  <div class="setting-info">
                     <h6 class="text-danger">Clear All Data</h6>
-                    <p>Permanently remove all locally stored expense data from this browser.</p>
+                    <p>Permanently remove all locally stored Expense data from this browser.</p>
                   </div>
                   <button class="btn btn-danger btn-sm" id="btnClearAllData">Clear All Data</button>
                 </div>
@@ -495,7 +607,7 @@
               <div class="card-body">
                 <ul class="mb-0 ps-3">
                   <li class="mb-2">Data is stored in <strong>browser LocalStorage</strong> on this device only.</li>
-                  <li class="mb-2">Clearing browser data / site data will erase your expenses.</li>
+                  <li class="mb-2">Clearing browser data / site data will erase your Expenses.</li>
                   <li class="mb-2">Export JSON backups regularly for safety.</li>
                   <li class="mb-2">Automatic daily backup only runs when you open the website.</li>
                   <li class="mb-2">To move data to another phone/PC: Export JSON → Import JSON on the other device.</li>
@@ -531,23 +643,38 @@
               <label class="form-label" for="expenseCategory">Category <span class="text-danger">*</span></label>
               <select class="form-select" id="expenseCategory" required></select>
             </div>
-            <div class="mb-3">
-              <label class="form-label" for="expenseAmount">Amount <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" id="expenseAmount" min="0.01" step="0.01" placeholder="0" required>
+            <div class="mb-3 d-none" id="expenseSubcategoryWrap">
+              <label class="form-label" for="expenseSubcategory">Sub Category <span class="text-danger">*</span></label>
+              <select class="form-select" id="expenseSubcategory"></select>
+            </div>
+            <div class="mb-3 d-none" id="expenseOtherDetailWrap">
+              <label class="form-label" for="expenseOtherDetail">Other Details <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="expenseOtherDetail" placeholder="Enter details">
             </div>
             <div class="mb-3">
               <label class="form-label" for="expenseDescription">Description</label>
               <input type="text" class="form-control" id="expenseDescription" placeholder="e.g. pizza">
             </div>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label" for="expensePayment">Payment Method</label>
-                <select class="form-select" id="expensePayment"></select>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label" for="expenseBank">Bank Account</label>
-                <select class="form-select" id="expenseBank"></select>
-              </div>
+            <div class="mb-3">
+              <label class="form-label" for="expenseAmount">Amount <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="expenseAmount" min="0.01" step="0.01" placeholder="0" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="expensePayment">Payment Method</label>
+              <select class="form-select" id="expensePayment">
+                <option value="">Select method</option>
+                <option value="Cash">Cash</option>
+                <option value="UPI">UPI</option>
+              </select>
+            </div>
+            <div class="mb-3 d-none" id="expenseUpiBankWrap">
+              <label class="form-label" for="expenseUpiBank">UPI Account <span class="text-danger">*</span></label>
+              <select class="form-select" id="expenseUpiBank">
+                <option value="">Select account</option>
+                <option value="JIO">JIO</option>
+                <option value="YES BANK">YES BANK</option>
+                <option value="ADC">ADC</option>
+              </select>
             </div>
             <div class="mb-0">
               <label class="form-label" for="expenseNotes">Notes</label>
@@ -608,6 +735,48 @@
     </div>
   </div>
 
+  <!-- RPD Income Modal -->
+  <div class="modal fade" id="rpdModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="rpdModalTitle">Add RPD Income</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="rpdForm" novalidate>
+            <input type="hidden" id="rpdId">
+            <div class="mb-3">
+              <label class="form-label" for="rpdDate">Date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="rpdDate" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="rpdAmount">Amount <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="rpdAmount" min="0.01" step="0.01" placeholder="0" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="rpdType">Type <span class="text-danger">*</span></label>
+              <select class="form-select" id="rpdType" required>
+                <option value="">Select type</option>
+                <option value="Cash">Cash</option>
+                <option value="YES">YES</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="mb-0">
+              <label class="form-label" for="rpdNotes">Notes</label>
+              <textarea class="form-control" id="rpdNotes" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="btnSaveRpd">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bank Modal -->
   <div class="modal fade" id="bankModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -621,7 +790,7 @@
             <input type="hidden" id="bankId">
             <div class="mb-3">
               <label class="form-label" for="bankName">Account Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="bankName" placeholder="e.g. Yes Bank" required>
+              <input type="text" class="form-control" id="bankName" placeholder="e.g. YES BANK" required>
             </div>
             <div class="mb-0">
               <label class="form-label" for="bankOpening">Opening Balance</label>
@@ -721,6 +890,7 @@
   <script src="js/categories.js"></script>
   <script src="js/expense.js"></script>
   <script src="js/income.js"></script>
+  <script src="js/rpd.js"></script>
   <script src="js/bank.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/charts.js"></script>

@@ -4,31 +4,154 @@
 
 const BackupModule = (() => {
   let pendingRestore = null;
+  let scheduleTimer = null;
+  let runningAuto = false;
 
-  function exportJSON() {
+  function refreshLocationUI() {
+    const settings = Storage.getSettings();
+    const label = Utils.getBackupLocationLabel(settings);
+    const input = document.getElementById('backupLocationInput');
+    const status = document.getElementById('settingsBackupLocation');
+    const timeInput = document.getElementById('autoBackupTime');
+    const timeStatus = document.getElementById('settingsBackupTime');
+    const time = Storage.getAutoBackupTime();
+
+    if (input) input.value = label === 'Browser Downloads' ? '' : label;
+    if (input && !input.value) input.placeholder = 'Browser Downloads (default)';
+    if (status) status.textContent = label;
+    if (timeInput && document.activeElement !== timeInput) timeInput.value = time;
+    if (timeStatus) timeStatus.textContent = time;
+  }
+
+  async function exportJSON() {
     const backup = Storage.exportBackupObject();
     const filename = `Expense-Backup-${Utils.timestampForFilename()}.json`;
-    Utils.downloadJSON(backup, filename);
+    const result = await Utils.saveJSONBackup(backup, filename, { interactive: true });
     Storage.markBackupDone(false);
-    Utils.showToast('JSON backup exported successfully.', 'success');
+    if (result.method === 'folder') {
+      Utils.showToast(`JSON backup saved to folder: ${result.folderName}`, 'success');
+    } else {
+      Utils.showToast('JSON backup exported to Downloads.', 'success');
+    }
     Dashboard.renderBackupStatus();
+    refreshLocationUI();
   }
 
-  function exportAutoBackup() {
+  async function exportAutoBackup({ interactive = false } = {}) {
     const backup = Storage.exportBackupObject();
     const filename = `Expense-AutoBackup-${Utils.dateForFilename()}.json`;
-    Utils.downloadJSON(backup, filename);
+    const result = await Utils.saveJSONBackup(backup, filename, { interactive });
     Storage.markBackupDone(true);
     Dashboard.renderBackupStatus();
+    refreshLocationUI();
+    return result;
   }
 
-  function checkAutoBackup() {
+  async function checkAutoBackup() {
+    if (runningAuto) return;
     if (!Storage.needsAutoBackup()) return;
+    runningAuto = true;
     try {
-      exportAutoBackup();
-      Utils.showToast('Automatic daily backup downloaded.', 'info');
+      const result = await exportAutoBackup({ interactive: false });
+      if (result.method === 'folder') {
+        Utils.showToast(`Automatic daily backup saved to: ${result.folderName}`, 'info');
+      } else {
+        Utils.showToast('Automatic daily backup downloaded to Browser Downloads.', 'info');
+      }
     } catch (err) {
       console.error('Auto backup failed', err);
+    } finally {
+      runningAuto = false;
+    }
+  }
+
+  function startAutoBackupScheduler() {
+    if (scheduleTimer) clearInterval(scheduleTimer);
+    // Check shortly after open, then every 30s while tab stays open
+    setTimeout(() => checkAutoBackup(), 800);
+    scheduleTimer = setInterval(() => checkAutoBackup(), 30000);
+  }
+
+  function stopAutoBackupScheduler() {
+    if (scheduleTimer) {
+      clearInterval(scheduleTimer);
+      scheduleTimer = null;
+    }
+  }
+
+  async function chooseBackupFolder() {
+    try {
+      if (!Utils.supportsDirectoryPicker()) {
+        Utils.showToast('Folder picker needs Chrome or Edge. Files otherwise go to Downloads.', 'warning');
+        return;
+      }
+      const handle = await Utils.chooseBackupDirectory();
+      Storage.updateSettings({ backupFolderName: handle.name });
+      refreshLocationUI();
+      Dashboard.renderBackupStatus();
+      Utils.showToast(`Backup location set to: ${handle.name}. Tip: choose the project "data" folder.`, 'success');
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      console.error(err);
+      Utils.showToast(err.message || 'Could not choose folder.', 'danger');
+    }
+  }
+
+  async function clearBackupFolder() {
+    try {
+      await Utils.clearBackupDirectoryHandle();
+    } catch (err) {
+      console.warn(err);
+    }
+    Storage.updateSettings({ backupFolderName: '' });
+    refreshLocationUI();
+    Dashboard.renderBackupStatus();
+    Utils.showToast('Backup location reset to Browser Downloads.', 'info');
+  }
+
+  function saveBackupTime(value) {
+    const time = /^\d{2}:\d{2}$/.test(value) ? value : '20:00';
+    Storage.updateSettings({ autoBackupTime: time });
+    refreshLocationUI();
+    Dashboard.renderBackupStatus();
+    Utils.showToast(`Daily backup time set to ${time}.`, 'success');
+    checkAutoBackup();
+  }
+
+  async function uploadJsonToDataFolder(file) {
+    if (!file) return;
+    try {
+      if (!Utils.supportsDirectoryPicker()) {
+        Utils.showToast('Upload to data folder needs Chrome or Edge.', 'warning');
+        return;
+      }
+
+      let handle = await Utils.getBackupDirectoryHandle();
+      if (!handle) {
+        Utils.showToast('Select the project data folder…', 'info');
+        handle = await Utils.chooseBackupDirectory();
+        Storage.updateSettings({ backupFolderName: handle.name });
+        refreshLocationUI();
+      }
+
+      const result = await Utils.uploadFileToBackupFolder(file, { interactive: true });
+      if (!result.saved) {
+        if (result.reason === 'permission') {
+          Utils.showToast('Permission denied for folder. Choose the data folder again.', 'danger');
+        } else {
+          Utils.showToast('Could not upload file to data folder.', 'danger');
+        }
+        return;
+      }
+
+      Storage.updateSettings({ backupFolderName: result.folderName || Storage.getSettings().backupFolderName || 'data' });
+      refreshLocationUI();
+      Dashboard.renderBackupStatus();
+      Utils.showToast(`Uploaded "${result.filename}" into folder: ${result.folderName}`, 'success');
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      console.error(err);
+      Utils.showToast(err.message || 'Upload failed.', 'danger');
     }
   }
 
@@ -80,23 +203,10 @@ const BackupModule = (() => {
     App.refreshAll();
   }
 
-  async function clearSampleData() {
-    const ok = await Utils.confirmModal({
-      title: 'Clear Sample Data',
-      message: 'This will remove demo/sample expenses and income. Your other data stays. Continue?',
-      okText: 'Clear Sample Data',
-      okClass: 'btn-warning'
-    });
-    if (!ok) return;
-    Storage.clearSampleData();
-    Utils.showToast('Sample data cleared. You can start entering real expenses.', 'success');
-    App.refreshAll();
-  }
-
   async function clearAllData() {
     const ok1 = await Utils.confirmModal({
       title: 'WARNING',
-      message: '<strong>This will permanently remove all locally stored expense data from this browser.</strong><p class="mb-0 mt-2">A safety backup will be kept briefly in local storage, but you should export a JSON backup first.</p>',
+      message: '<strong>This will permanently remove all locally stored Expense data from this browser.</strong><p class="mb-0 mt-2">A safety backup will be kept briefly in local storage, but you should export a JSON backup first.</p>',
       okText: 'Continue',
       okClass: 'btn-warning'
     });
@@ -116,18 +226,26 @@ const BackupModule = (() => {
   }
 
   function bindEvents() {
-    document.getElementById('btnExportJSON')?.addEventListener('click', exportJSON);
-    document.getElementById('btnExportJSON2')?.addEventListener('click', exportJSON);
+    document.getElementById('btnExportJSON')?.addEventListener('click', () => exportJSON());
+    document.getElementById('btnExportJSON2')?.addEventListener('click', () => exportJSON());
     document.getElementById('btnConfirmJSONRestore')?.addEventListener('click', confirmRestore);
-    document.getElementById('btnClearSample')?.addEventListener('click', clearSampleData);
     document.getElementById('btnClearAllData')?.addEventListener('click', clearAllData);
+    document.getElementById('btnChooseBackupFolder')?.addEventListener('click', chooseBackupFolder);
+    document.getElementById('btnClearBackupFolder')?.addEventListener('click', clearBackupFolder);
 
     const fileInput = document.getElementById('jsonImportFile');
+    const uploadToDataInput = document.getElementById('jsonUploadToDataFile');
     document.getElementById('btnImportJSON')?.addEventListener('click', () => fileInput?.click());
     document.getElementById('btnImportJSON2')?.addEventListener('click', () => fileInput?.click());
+    document.getElementById('btnUploadJsonToData')?.addEventListener('click', () => uploadToDataInput?.click());
     fileInput?.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
       handleJSONFile(file);
+      e.target.value = '';
+    });
+    uploadToDataInput?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      await uploadJsonToDataFolder(file);
       e.target.value = '';
     });
 
@@ -138,12 +256,24 @@ const BackupModule = (() => {
         'info'
       );
       Dashboard.renderBackupStatus();
+      if (e.target.checked) checkAutoBackup();
     });
 
-    document.getElementById('btnManualAutoBackup')?.addEventListener('click', () => {
-      exportAutoBackup();
-      Utils.showToast('Backup downloaded.', 'success');
+    document.getElementById('autoBackupTime')?.addEventListener('change', (e) => {
+      saveBackupTime(e.target.value);
     });
+
+    document.getElementById('btnManualAutoBackup')?.addEventListener('click', async () => {
+      const result = await exportAutoBackup({ interactive: true });
+      if (result.method === 'folder') {
+        Utils.showToast(`Backup saved to: ${result.folderName}`, 'success');
+      } else {
+        Utils.showToast('Backup downloaded to Browser Downloads.', 'success');
+      }
+    });
+
+    refreshLocationUI();
+    startAutoBackupScheduler();
   }
 
   return {
@@ -151,9 +281,11 @@ const BackupModule = (() => {
     exportJSON,
     exportAutoBackup,
     checkAutoBackup,
+    startAutoBackupScheduler,
+    stopAutoBackupScheduler,
     handleJSONFile,
     confirmRestore,
-    clearSampleData,
-    clearAllData
+    clearAllData,
+    refreshLocationUI
   };
 })();

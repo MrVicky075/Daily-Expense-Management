@@ -14,6 +14,33 @@ const ExpenseModule = (() => {
     dateTo: ''
   };
 
+  const CATEGORY_SUBOPTIONS = {
+    FOOD: ['Paket', 'Puri', 'Others'],
+    HOME: ['child', 'dudh', 'food-other', 'others'],
+    'BIG-EXPENSE': ['recharge', 'with Parul', 'My Personal', 'Others'],
+    PETROL: ['my', 'other']
+  };
+
+  const UPI_BANKS = ['JIO', 'YES BANK', 'ADC'];
+  const PAYMENT_METHODS = ['Cash', 'UPI'];
+
+  function normalizeBankName(name) {
+    if (!name) return '';
+    const upper = String(name).trim().toUpperCase().replace(/\s+/g, ' ');
+    if (upper === 'YES BANK' || upper === 'YESBANK') return 'YES BANK';
+    if (upper === 'JIO') return 'JIO';
+    if (upper === 'ADC') return 'ADC';
+    return name;
+  }
+
+  function resolveBankAccountName(selected) {
+    const normalized = normalizeBankName(selected);
+    if (!normalized) return '';
+    const banks = Storage.getBankAccounts();
+    const match = banks.find((b) => normalizeBankName(b.name) === normalized);
+    return match ? match.name : normalized;
+  }
+
   function getFilteredExpenses(monthKey) {
     let list = Storage.getExpensesByMonth(monthKey);
 
@@ -38,6 +65,7 @@ const ExpenseModule = (() => {
         return (
           Utils.matchesSearch(e.description, q) ||
           Utils.matchesSearch(e.category, q) ||
+          Utils.matchesSearch(e.subcategory, q) ||
           Utils.matchesSearch(e.date, q) ||
           Utils.matchesSearch(String(e.amount), q) ||
           Utils.matchesSearch(e.bankAccount, q) ||
@@ -92,9 +120,68 @@ const ExpenseModule = (() => {
     renderTable();
   }
 
+  function updateCategoryDependentFields(selectedCategory, selectedSubcategory) {
+    const subWrap = document.getElementById('expenseSubcategoryWrap');
+    const subSelect = document.getElementById('expenseSubcategory');
+    const otherWrap = document.getElementById('expenseOtherDetailWrap');
+    const otherInput = document.getElementById('expenseOtherDetail');
+    const options = CATEGORY_SUBOPTIONS[selectedCategory];
+
+    if (selectedCategory === 'OTHER') {
+      subWrap?.classList.add('d-none');
+      otherWrap?.classList.remove('d-none');
+      if (subSelect) subSelect.innerHTML = '';
+      if (otherInput && selectedSubcategory !== undefined) {
+        otherInput.value = selectedSubcategory || '';
+      }
+      return;
+    }
+
+    otherWrap?.classList.add('d-none');
+    if (otherInput) otherInput.value = '';
+
+    if (options && options.length) {
+      subWrap?.classList.remove('d-none');
+      if (subSelect) {
+        subSelect.innerHTML =
+          `<option value="">Select sub category</option>` +
+          options.map((o) => `<option value="${Utils.escapeHtml(o)}">${Utils.escapeHtml(o)}</option>`).join('');
+        if (selectedSubcategory) {
+          const match = options.find((o) => o.toLowerCase() === String(selectedSubcategory).toLowerCase());
+          subSelect.value = match || '';
+        }
+      }
+    } else {
+      subWrap?.classList.add('d-none');
+      if (subSelect) subSelect.innerHTML = '';
+    }
+  }
+
+  function updatePaymentDependentFields(paymentMethod, bankAccount) {
+    const upiWrap = document.getElementById('expenseUpiBankWrap');
+    const upiSelect = document.getElementById('expenseUpiBank');
+
+    if (paymentMethod === 'UPI') {
+      upiWrap?.classList.remove('d-none');
+      if (upiSelect && bankAccount !== undefined) {
+        const normalized = normalizeBankName(bankAccount);
+        upiSelect.value = UPI_BANKS.includes(normalized) ? normalized : '';
+      }
+    } else {
+      upiWrap?.classList.add('d-none');
+      if (upiSelect) upiSelect.value = '';
+    }
+  }
+
+  function resetDependentFields() {
+    updateCategoryDependentFields('');
+    updatePaymentDependentFields('');
+    const otherInput = document.getElementById('expenseOtherDetail');
+    if (otherInput) otherInput.value = '';
+  }
+
   function populateFormSelects() {
     const catSelect = document.getElementById('expenseCategory');
-    const bankSelect = document.getElementById('expenseBank');
     const paySelect = document.getElementById('expensePayment');
     const filterCat = document.getElementById('filterCategory');
     const filterBank = document.getElementById('filterBank');
@@ -102,17 +189,20 @@ const ExpenseModule = (() => {
 
     const categories = Storage.getCategories();
     const banks = Storage.getBankAccounts();
-    const methods = Storage.getData().paymentMethods;
 
     const catOpts = categories.map((c) => `<option value="${Utils.escapeHtml(c.name)}">${Utils.escapeHtml(c.name)}</option>`).join('');
-    const bankOpts = `<option value="">— None —</option>` + banks.map((b) => `<option value="${Utils.escapeHtml(b.name)}">${Utils.escapeHtml(b.name)}</option>`).join('');
-    const payOpts = methods.map((m) => `<option value="${Utils.escapeHtml(m)}">${Utils.escapeHtml(m)}</option>`).join('');
+    const payOpts = PAYMENT_METHODS.map((m) => `<option value="${Utils.escapeHtml(m)}">${Utils.escapeHtml(m)}</option>`).join('');
+    const bankFilterOpts = banks.map((b) => `<option value="${Utils.escapeHtml(b.name)}">${Utils.escapeHtml(b.name)}</option>`).join('');
+    const upiFilterOpts = UPI_BANKS.map((b) => `<option value="${Utils.escapeHtml(b)}">${Utils.escapeHtml(b)}</option>`).join('');
 
     if (catSelect) catSelect.innerHTML = `<option value="">Select category</option>${catOpts}`;
-    if (bankSelect) bankSelect.innerHTML = bankOpts;
-    if (paySelect) paySelect.innerHTML = `<option value="">Select method</option>${payOpts}`;
+    if (paySelect) {
+      paySelect.innerHTML = `<option value="">Select method</option>${payOpts}`;
+    }
     if (filterCat) filterCat.innerHTML = `<option value="">All Categories</option>${catOpts}`;
-    if (filterBank) filterBank.innerHTML = `<option value="">All Accounts</option>${banks.map((b) => `<option value="${Utils.escapeHtml(b.name)}">${Utils.escapeHtml(b.name)}</option>`).join('')}`;
+    if (filterBank) {
+      filterBank.innerHTML = `<option value="">All Accounts</option>${bankFilterOpts || upiFilterOpts}`;
+    }
     if (filterPay) filterPay.innerHTML = `<option value="">All Methods</option>${payOpts}`;
   }
 
@@ -123,6 +213,7 @@ const ExpenseModule = (() => {
     document.getElementById('expenseForm').reset();
     document.getElementById('expenseForm').classList.remove('was-validated');
     document.getElementById('expenseDate').value = Utils.todayISO();
+    resetDependentFields();
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('expenseModal'));
     modal.show();
   }
@@ -141,9 +232,12 @@ const ExpenseModule = (() => {
     document.getElementById('expenseAmount').value = exp.amount;
     document.getElementById('expenseDescription').value = exp.description || '';
     document.getElementById('expensePayment').value = exp.paymentMethod || '';
-    document.getElementById('expenseBank').value = exp.bankAccount || '';
     document.getElementById('expenseNotes').value = exp.notes || '';
     document.getElementById('expenseForm').classList.remove('was-validated');
+
+    updateCategoryDependentFields(exp.category, exp.subcategory || '');
+    updatePaymentDependentFields(exp.paymentMethod || '', exp.bankAccount || '');
+
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('expenseModal'));
     modal.show();
   }
@@ -157,9 +251,33 @@ const ExpenseModule = (() => {
     const amount = Utils.parseAmount(document.getElementById('expenseAmount').value);
     const description = document.getElementById('expenseDescription').value.trim();
     const paymentMethod = document.getElementById('expensePayment').value;
-    const bankAccount = document.getElementById('expenseBank').value;
     const notes = document.getElementById('expenseNotes').value.trim();
     const id = document.getElementById('expenseId').value;
+
+    let subcategory = '';
+    if (category === 'OTHER') {
+      subcategory = document.getElementById('expenseOtherDetail').value.trim();
+      if (!subcategory) {
+        Utils.showToast('Please enter other details.', 'warning');
+        return;
+      }
+    } else if (CATEGORY_SUBOPTIONS[category]) {
+      subcategory = document.getElementById('expenseSubcategory').value;
+      if (!subcategory) {
+        Utils.showToast('Please select a sub category.', 'warning');
+        return;
+      }
+    }
+
+    let bankAccount = '';
+    if (paymentMethod === 'UPI') {
+      const upiBank = document.getElementById('expenseUpiBank').value;
+      if (!upiBank) {
+        Utils.showToast('Please select a UPI account.', 'warning');
+        return;
+      }
+      bankAccount = resolveBankAccountName(upiBank);
+    }
 
     if (!date) {
       Utils.showToast('Please select a date.', 'warning');
@@ -174,7 +292,7 @@ const ExpenseModule = (() => {
       return;
     }
 
-    const payload = { date, category, amount, description, paymentMethod, bankAccount, notes };
+    const payload = { date, category, subcategory, amount, description, paymentMethod, bankAccount, notes };
 
     if (id) {
       Storage.updateExpense(id, payload);
@@ -191,7 +309,7 @@ const ExpenseModule = (() => {
   async function deleteExpense(id) {
     const ok = await Utils.confirmModal({
       title: 'Delete Expense',
-      message: 'Are you sure you want to delete this expense?',
+      message: 'Are you sure you want to delete this Expense?',
       okText: 'Delete',
       okClass: 'btn-danger'
     });
@@ -199,6 +317,14 @@ const ExpenseModule = (() => {
     Storage.deleteExpense(id);
     Utils.showToast('Expense deleted.', 'success');
     App.refreshAll();
+  }
+
+  function categoryBadge(exp) {
+    const cat = Utils.escapeHtml(exp.category || '');
+    if (exp.subcategory) {
+      return `${cat} <small class="text-muted">/ ${Utils.escapeHtml(exp.subcategory)}</small>`;
+    }
+    return cat;
   }
 
   function renderTable(targetId) {
@@ -210,13 +336,13 @@ const ExpenseModule = (() => {
     if (!tbody && !recentBody) return;
 
     if (list.length === 0) {
-      const empty = `<tr><td colspan="8" class="empty-state"><i class="bi bi-inbox"></i>No expenses found for this month.</td></tr>`;
+      const empty = `<tr><td colspan="8" class="empty-state"><i class="bi bi-inbox"></i>No Expenses found for this month.</td></tr>`;
       if (tbody) tbody.innerHTML = empty;
     } else {
       const rows = list.map((e) => `
         <tr>
           <td>${Utils.escapeHtml(Utils.formatDateDisplay(e.date))}</td>
-          <td><span class="badge text-bg-secondary badge-category">${Utils.escapeHtml(e.category)}</span></td>
+          <td><span class="badge text-bg-secondary badge-category">${categoryBadge(e)}</span></td>
           <td>${Utils.escapeHtml(e.description || '—')}</td>
           <td class="amount-expense">${Utils.formatCurrency(e.amount)}</td>
           <td>${Utils.escapeHtml(e.paymentMethod || '—')}</td>
@@ -234,12 +360,12 @@ const ExpenseModule = (() => {
     if (recentBody) {
       const recent = [...list].slice(0, 8);
       if (recent.length === 0) {
-        recentBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">No expenses found for this month.</td></tr>`;
+        recentBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">No Expenses found for this month.</td></tr>`;
       } else {
         recentBody.innerHTML = recent.map((e) => `
           <tr>
             <td>${Utils.escapeHtml(Utils.formatDateDisplay(e.date))}</td>
-            <td><span class="badge text-bg-secondary badge-category">${Utils.escapeHtml(e.category)}</span></td>
+            <td><span class="badge text-bg-secondary badge-category">${categoryBadge(e)}</span></td>
             <td>${Utils.escapeHtml(e.description || '—')}</td>
             <td class="amount-expense">${Utils.formatCurrency(e.amount)}</td>
             <td class="table-actions text-nowrap">
@@ -258,7 +384,17 @@ const ExpenseModule = (() => {
   function bindEvents() {
     document.getElementById('btnSaveExpense')?.addEventListener('click', saveExpense);
     document.getElementById('btnAddExpense')?.addEventListener('click', openAddModal);
-    document.getElementById('btnAddExpenseDash')?.addEventListener('click', openAddModal);
+    document.getElementById('btnAddExpenseDash')?.addEventListener('click', () => {
+      App.navigate('expenses');
+      openAddModal();
+    });
+
+    document.getElementById('expenseCategory')?.addEventListener('change', (e) => {
+      updateCategoryDependentFields(e.target.value);
+    });
+    document.getElementById('expensePayment')?.addEventListener('change', (e) => {
+      updatePaymentDependentFields(e.target.value);
+    });
 
     document.getElementById('filterCategory')?.addEventListener('change', (e) => setFilters({ category: e.target.value }));
     document.getElementById('filterBank')?.addEventListener('change', (e) => setFilters({ bank: e.target.value }));

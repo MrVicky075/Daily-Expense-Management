@@ -22,6 +22,7 @@ const App = (() => {
       dashboard: 'Dashboard',
       expenses: 'Expenses',
       income: 'Income',
+      rpd: 'RPD',
       banks: 'Bank Accounts',
       reports: 'Reports',
       excel: 'Excel View',
@@ -40,6 +41,7 @@ const App = (() => {
     ExpenseModule.populateFormSelects();
     ExpenseModule.renderTable();
     IncomeModule.renderTable();
+    RpdModule.renderTable();
     BankModule.render();
     CategoriesModule.render();
     ChartsModule.render();
@@ -84,17 +86,12 @@ const App = (() => {
   }
 
   function init() {
-    // Load data (creates sample data on first visit)
+    // Load data (empty defaults on first visit — no sample data)
     Storage.loadData();
 
-    // Ensure selected month is set
+    // Ensure selected month is set to current month
     if (!Storage.getSettings().selectedMonth) {
-      // Prefer sample month if sample data, else current
-      if (Storage.getSettings().isSampleData) {
-        Storage.setSelectedMonth('2026-09');
-      } else {
-        Storage.setSelectedMonth(Utils.currentMonthKey());
-      }
+      Storage.setSelectedMonth(Utils.currentMonthKey());
     }
 
     bindNavigation();
@@ -103,6 +100,7 @@ const App = (() => {
     Dashboard.bindEvents();
     ExpenseModule.bindEvents();
     IncomeModule.bindEvents();
+    RpdModule.bindEvents();
     BankModule.bindEvents();
     CategoriesModule.bindEvents();
     ExcelModule.bindEvents();
@@ -110,9 +108,6 @@ const App = (() => {
 
     refreshAll();
     navigate('dashboard');
-
-    // Automatic daily backup (browser limitation: only when app is opened)
-    setTimeout(() => BackupModule.checkAutoBackup(), 800);
   }
 
   return {

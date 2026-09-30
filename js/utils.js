@@ -114,6 +114,164 @@ const Utils = (() => {
     downloadBlob(blob, filename);
   }
 
+  /* ---------- Backup folder (File System Access API) ---------- */
+
+  const BACKUP_FOLDER_DB = 'expenseManagementBackupFolder';
+  const BACKUP_FOLDER_STORE = 'handles';
+  const BACKUP_FOLDER_KEY = 'directory';
+
+  function openBackupFolderDb() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(BACKUP_FOLDER_DB, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(BACKUP_FOLDER_STORE)) {
+          db.createObjectStore(BACKUP_FOLDER_STORE);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function saveBackupDirectoryHandle(handle) {
+    const db = await openBackupFolderDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(BACKUP_FOLDER_STORE, 'readwrite');
+      tx.objectStore(BACKUP_FOLDER_STORE).put(handle, BACKUP_FOLDER_KEY);
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onerror = () => {
+        db.close();
+        reject(tx.error);
+      };
+    });
+  }
+
+  async function getBackupDirectoryHandle() {
+    try {
+      const db = await openBackupFolderDb();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(BACKUP_FOLDER_STORE, 'readonly');
+        const req = tx.objectStore(BACKUP_FOLDER_STORE).get(BACKUP_FOLDER_KEY);
+        req.onsuccess = () => {
+          db.close();
+          resolve(req.result || null);
+        };
+        req.onerror = () => {
+          db.close();
+          reject(req.error);
+        };
+      });
+    } catch (err) {
+      console.warn('Could not read backup folder handle', err);
+      return null;
+    }
+  }
+
+  async function clearBackupDirectoryHandle() {
+    const db = await openBackupFolderDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(BACKUP_FOLDER_STORE, 'readwrite');
+      tx.objectStore(BACKUP_FOLDER_STORE).delete(BACKUP_FOLDER_KEY);
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onerror = () => {
+        db.close();
+        reject(tx.error);
+      };
+    });
+  }
+
+  function supportsDirectoryPicker() {
+    return typeof window.showDirectoryPicker === 'function';
+  }
+
+  async function ensureDirectoryPermission(handle, { interactive = false } = {}) {
+    if (!handle) return false;
+    const opts = { mode: 'readwrite' };
+    if ((await handle.queryPermission(opts)) === 'granted') return true;
+    if (!interactive) return false;
+    return (await handle.requestPermission(opts)) === 'granted';
+  }
+
+  async function chooseBackupDirectory() {
+    if (!supportsDirectoryPicker()) {
+      throw new Error('Folder picker is not supported in this browser. Use Chrome or Edge.');
+    }
+    const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    await saveBackupDirectoryHandle(handle);
+    return handle;
+  }
+
+  async function writeJSONToBackupFolder(obj, filename, { interactive = false } = {}) {
+    const handle = await getBackupDirectoryHandle();
+    if (!handle) return { saved: false, reason: 'no-folder' };
+
+    const allowed = await ensureDirectoryPermission(handle, { interactive });
+    if (!allowed) return { saved: false, reason: 'permission', folderName: handle.name };
+
+    const fileHandle = await handle.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(JSON.stringify(obj, null, 2));
+    await writable.close();
+    return { saved: true, folderName: handle.name, filename };
+  }
+
+  async function writeBlobToBackupFolder(blob, filename, { interactive = false } = {}) {
+    let handle = await getBackupDirectoryHandle();
+    if (!handle && interactive && supportsDirectoryPicker()) {
+      handle = await chooseBackupDirectory();
+    }
+    if (!handle) return { saved: false, reason: 'no-folder' };
+
+    const allowed = await ensureDirectoryPermission(handle, { interactive });
+    if (!allowed) return { saved: false, reason: 'permission', folderName: handle.name };
+
+    const fileHandle = await handle.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return { saved: true, folderName: handle.name, filename };
+  }
+
+  async function uploadFileToBackupFolder(file, { interactive = true } = {}) {
+    if (!file) return { saved: false, reason: 'no-file' };
+    const filename = file.name || `upload-${timestampForFilename()}.json`;
+    return writeBlobToBackupFolder(file, filename, { interactive });
+  }
+
+  async function saveJSONBackup(obj, filename, { interactive = false } = {}) {
+    try {
+      const result = await writeJSONToBackupFolder(obj, filename, { interactive });
+      if (result.saved) return { ...result, method: 'folder' };
+      // If interactive and no folder yet, ask user to pick the project data folder
+      if (interactive && result.reason === 'no-folder' && supportsDirectoryPicker()) {
+        const handle = await chooseBackupDirectory();
+        const retry = await writeJSONToBackupFolder(obj, filename, { interactive: true });
+        if (retry.saved) {
+          return { ...retry, method: 'folder', folderName: handle.name };
+        }
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        return { saved: false, reason: 'cancelled' };
+      }
+      console.warn('Folder save failed, falling back to download', err);
+    }
+    downloadJSON(obj, filename);
+    return { saved: true, method: 'download', folderName: 'Browser Downloads' };
+  }
+
+  function getBackupLocationLabel(settings) {
+    const name = settings?.backupFolderName;
+    return name ? name : 'Browser Downloads';
+  }
+
   function pad2(n) {
     return String(n).padStart(2, '0');
   }
@@ -275,6 +433,14 @@ const Utils = (() => {
     formatDateTimeShort,
     downloadBlob,
     downloadJSON,
+    chooseBackupDirectory,
+    getBackupDirectoryHandle,
+    clearBackupDirectoryHandle,
+    supportsDirectoryPicker,
+    saveJSONBackup,
+    uploadFileToBackupFolder,
+    writeBlobToBackupFolder,
+    getBackupLocationLabel,
     timestampForFilename,
     dateForFilename,
     escapeHtml,

@@ -3,11 +3,38 @@
  */
 
 const IncomeModule = (() => {
+  const DASH_ACCOUNTS = [
+    { key: 'JIO', el: 'incomeDashJio', match: ['JIO'] },
+    { key: 'YES', el: 'incomeDashYes', match: ['YES', 'YES BANK', 'YESBANK'] },
+    { key: 'ADC', el: 'incomeDashAdc', match: ['ADC'] }
+  ];
+
+  function normalizeAccount(name) {
+    return String(name || '').trim().toUpperCase().replace(/\s+/g, ' ');
+  }
+
+  function accountMatches(bankAccount, matchList) {
+    const normalized = normalizeAccount(bankAccount);
+    return matchList.some((m) => normalizeAccount(m) === normalized);
+  }
+
   function populateFormSelects() {
     const typeSelect = document.getElementById('incomeType');
     const bankSelect = document.getElementById('incomeBank');
-    const types = Storage.getData().incomeTypes;
+    const types = Storage.getData().incomeTypes.filter(
+      (t) => t.id !== 'INC-RPD' && String(t.name).toLowerCase() !== 'rpd income'
+    );
+    const preferredBanks = ['JIO', 'YES', 'ADC'];
     const banks = Storage.getBankAccounts();
+    const bankNames = [];
+    preferredBanks.forEach((name) => {
+      if (!bankNames.some((n) => n.toUpperCase() === name)) bankNames.push(name);
+    });
+    banks.forEach((b) => {
+      if (b.name && !bankNames.some((n) => n.toUpperCase() === String(b.name).toUpperCase())) {
+        bankNames.push(b.name);
+      }
+    });
 
     if (typeSelect) {
       typeSelect.innerHTML =
@@ -17,8 +44,21 @@ const IncomeModule = (() => {
     if (bankSelect) {
       bankSelect.innerHTML =
         `<option value="">— None —</option>` +
-        banks.map((b) => `<option value="${Utils.escapeHtml(b.name)}">${Utils.escapeHtml(b.name)}</option>`).join('');
+        bankNames.map((name) => `<option value="${Utils.escapeHtml(name)}">${Utils.escapeHtml(name)}</option>`).join('');
     }
+  }
+
+  function renderDashboard() {
+    const monthKey = Storage.getSelectedMonth();
+    const list = Storage.getIncomeByMonth(monthKey);
+
+    DASH_ACCOUNTS.forEach((acc) => {
+      const amount = list
+        .filter((i) => accountMatches(i.bankAccount, acc.match))
+        .reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+      const el = document.getElementById(acc.el);
+      if (el) el.textContent = Utils.formatCurrency(amount);
+    });
   }
 
   function openAddModal() {
@@ -67,7 +107,7 @@ const IncomeModule = (() => {
       return;
     }
     if (!type) {
-      Utils.showToast('Please select an income type.', 'warning');
+      Utils.showToast('Please select an Income type.', 'warning');
       return;
     }
     if (isNaN(amount) || amount <= 0) {
@@ -92,7 +132,7 @@ const IncomeModule = (() => {
   async function deleteIncome(id) {
     const ok = await Utils.confirmModal({
       title: 'Delete Income',
-      message: 'Are you sure you want to delete this income entry?',
+      message: 'Are you sure you want to delete this Income entry?',
       okText: 'Delete',
       okClass: 'btn-danger'
     });
@@ -103,13 +143,15 @@ const IncomeModule = (() => {
   }
 
   function renderTable() {
+    renderDashboard();
+
     const monthKey = Storage.getSelectedMonth();
     const list = Storage.getIncomeByMonth(monthKey).sort((a, b) => b.date.localeCompare(a.date));
     const tbody = document.getElementById('incomeTableBody');
     if (!tbody) return;
 
     if (list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><i class="bi bi-inbox"></i>No income found for this month.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><i class="bi bi-inbox"></i>No Income found for this month.</td></tr>`;
       return;
     }
 
@@ -131,12 +173,16 @@ const IncomeModule = (() => {
   function bindEvents() {
     document.getElementById('btnSaveIncome')?.addEventListener('click', saveIncome);
     document.getElementById('btnAddIncome')?.addEventListener('click', openAddModal);
-    document.getElementById('btnAddIncomeDash')?.addEventListener('click', openAddModal);
+    document.getElementById('btnAddIncomeDash')?.addEventListener('click', () => {
+      App.navigate('income');
+      openAddModal();
+    });
   }
 
   return {
     bindEvents,
     renderTable,
+    renderDashboard,
     populateFormSelects,
     openAddModal,
     openEditModal,

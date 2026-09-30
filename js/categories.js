@@ -5,7 +5,9 @@
 const CategoriesModule = (() => {
   function render() {
     const categories = Storage.getCategories();
-    const types = Storage.getData().incomeTypes;
+    const types = Storage.getData().incomeTypes.filter(
+      (t) => t.id !== 'INC-RPD' && String(t.name).toLowerCase() !== 'rpd income'
+    );
     const catList = document.getElementById('categoryList');
     const typeList = document.getElementById('incomeTypeList');
 
@@ -73,7 +75,7 @@ const CategoriesModule = (() => {
     const input = document.getElementById('newIncomeTypeName');
     const name = input.value.trim();
     if (!name) {
-      Utils.showToast('Please enter an income type.', 'warning');
+      Utils.showToast('Please enter an Income type.', 'warning');
       return;
     }
     const result = Storage.addIncomeType(name);
@@ -89,7 +91,7 @@ const CategoriesModule = (() => {
   async function deleteIncomeType(id) {
     const ok = await Utils.confirmModal({
       title: 'Delete Income Type',
-      message: 'Delete this custom income type?',
+      message: 'Delete this custom Income type?',
       okText: 'Delete',
       okClass: 'btn-danger'
     });

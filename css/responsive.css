@@ -70,8 +70,19 @@
 
 @media (max-width: 575.98px) {
   .app-header .month-nav {
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    height: 30px;
+    padding: 0.1rem 0.15rem 0.1rem 0.3rem;
+  }
+
+  .month-nav-icon {
+    font-size: 0.85rem;
+    width: 1.1rem;
+  }
+
+  .month-nav-select {
+    min-width: 6.25rem;
+    max-width: 7.5rem;
+    font-size: 0.75rem !important;
   }
 
   .stat-card .stat-value {

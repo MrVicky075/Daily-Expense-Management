@@ -41,13 +41,13 @@ const ExcelModule = (() => {
 
     // Worksheet 2: Expenses
     const expRows = [
-      ['ID', 'Date', 'Category', 'Amount', 'Description', 'Payment Method', 'Bank Account', 'Notes']
+      ['ID', 'Date', 'Category', 'Sub Category', 'Amount', 'Description', 'Payment Method', 'Bank Account', 'Notes']
     ];
     expenses.forEach((e) => {
-      expRows.push([e.id, e.date, e.category, e.amount, e.description, e.paymentMethod, e.bankAccount, e.notes]);
+      expRows.push([e.id, e.date, e.category, e.subcategory || '', e.amount, e.description, e.paymentMethod, e.bankAccount, e.notes]);
     });
     const wsExp = XLSX.utils.aoa_to_sheet(expRows);
-    wsExp['!cols'] = [{ wch: 18 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 20 }];
+    wsExp['!cols'] = [{ wch: 18 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 20 }];
     XLSX.utils.book_append_sheet(wb, wsExp, 'Expenses');
 
     // Worksheet 3: Income
@@ -71,7 +71,7 @@ const ExcelModule = (() => {
     XLSX.utils.book_append_sheet(wb, wsBank, 'Bank Balance');
 
     // Worksheet 5: Daily Summary
-    const dailyRows = [['Date', 'Total Expense', 'Total Income', 'Balance']];
+    const dailyRows = [['Date', 'Total Expenses', 'Total Income', 'Balance']];
     daily.forEach((d) => {
       dailyRows.push([d.date, d.expense, d.income, d.balance]);
     });
@@ -160,6 +160,7 @@ const ExcelModule = (() => {
               date,
               month: Utils.getMonthKey(date),
               category: r.Category || r.category || 'OTHER',
+              subcategory: r['Sub Category'] || r.Subcategory || r.subcategory || '',
               amount: Number(r.Amount || r.amount) || 0,
               description: r.Description || r.description || '',
               paymentMethod: r['Payment Method'] || r.paymentMethod || '',

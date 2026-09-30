@@ -177,7 +177,7 @@ const Dashboard = (() => {
           <div class="excel-cat-header">calculation</div>
           <div class="excel-cat-body">
             <div class="excel-entry">Income: ${totals.totalIncome}</div>
-            <div class="excel-entry">Expense: ${totals.totalExpense}</div>
+            <div class="excel-entry">Expenses: ${totals.totalExpense}</div>
             <div class="excel-entry">Balance: ${totals.balance}</div>
           </div>
           <div class="excel-cat-total">TOTAL ${totals.balance}</div>
@@ -249,21 +249,23 @@ const Dashboard = (() => {
 
     const lastAuto = Storage.getLastAutoBackupDate();
     setVal('settingsLastAutoBackup', lastAuto ? Utils.formatDateDisplay(lastAuto) + ' (date)' : 'Never');
-    if (lastAuto) {
-      const next = new Date(lastAuto + 'T00:00:00');
-      next.setDate(next.getDate() + 1);
-      setVal('settingsNextBackup', Utils.formatDateDisplay(Utils.formatISODate(next)));
-    } else {
-      setVal('settingsNextBackup', 'On next visit (if enabled)');
+    setVal('settingsNextBackup', Storage.getNextAutoBackupLabel());
+    setVal('settingsBackupTime', Storage.getAutoBackupTime());
+
+    setVal('settingsBackupLocation', Utils.getBackupLocationLabel(settings));
+    const locInput = document.getElementById('backupLocationInput');
+    if (locInput) {
+      locInput.value = settings.backupFolderName || '';
+      if (!locInput.value) locInput.placeholder = 'Browser Downloads (default)';
+    }
+
+    const timeInput = document.getElementById('autoBackupTime');
+    if (timeInput && document.activeElement !== timeInput) {
+      timeInput.value = Storage.getAutoBackupTime();
     }
 
     const toggle = document.getElementById('autoBackupToggle');
     if (toggle) toggle.checked = !!settings.autoBackup;
-
-    const demoBanner = document.getElementById('demoDataBanner');
-    if (demoBanner) {
-      demoBanner.classList.toggle('d-none', !settings.isSampleData);
-    }
   }
 
   function onLastUpdateDateChange(e) {

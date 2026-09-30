@@ -16,6 +16,7 @@ const Storage = (() => {
       version: VERSION,
       expenses: [],
       income: [],
+      rpd: [],
       categories: [
         { id: 'CAT-HOME', name: 'HOME', isDefault: true, color: '#198754' },
         { id: 'CAT-BIG', name: 'BIG-EXPENSE', isDefault: true, color: '#dc3545' },
@@ -24,18 +25,47 @@ const Storage = (() => {
         { id: 'CAT-PETROL', name: 'PETROL', isDefault: true, color: '#0d6efd' }
       ],
       incomeTypes: [
-        { id: 'INC-RPD', name: 'RPD Income', isDefault: true },
         { id: 'INC-IPO', name: 'IPO', isDefault: true },
         { id: 'INC-SAL', name: 'Salary', isDefault: true },
         { id: 'INC-OTH', name: 'Other Income', isDefault: true }
       ],
-      bankAccounts: [],
-      paymentMethods: ['UPI', 'Cash', 'Card', 'Net Banking', 'Other'],
+      bankAccounts: [
+        {
+          id: 'BANK-JIO',
+          name: 'JIO',
+          openingBalance: 0,
+          currentBalance: 0,
+          transactions: [],
+          createdAt: Utils.nowISO(),
+          updatedAt: Utils.nowISO()
+        },
+        {
+          id: 'BANK-YES',
+          name: 'YES',
+          openingBalance: 0,
+          currentBalance: 0,
+          transactions: [],
+          createdAt: Utils.nowISO(),
+          updatedAt: Utils.nowISO()
+        },
+        {
+          id: 'BANK-ADC',
+          name: 'ADC',
+          openingBalance: 0,
+          currentBalance: 0,
+          transactions: [],
+          createdAt: Utils.nowISO(),
+          updatedAt: Utils.nowISO()
+        }
+      ],
+      paymentMethods: ['Cash', 'UPI'],
       settings: {
         autoBackup: true,
+        autoBackupTime: '20:00',
         currency: '₹',
         isSampleData: false,
-        selectedMonth: null
+        selectedMonth: null,
+        backupFolderName: ''
       },
       meta: {
         lastSaved: null,
@@ -45,99 +75,6 @@ const Storage = (() => {
         createdAt: Utils.nowISO()
       }
     };
-  }
-
-  function createSampleData() {
-    const data = defaultData();
-    const month = '2026-09';
-    const now = Utils.nowISO();
-
-    data.settings.isSampleData = true;
-    data.settings.selectedMonth = month;
-
-    data.bankAccounts = [
-      {
-        id: 'BANK-YES',
-        name: 'Yes Bank',
-        openingBalance: 0,
-        currentBalance: 0,
-        transactions: [],
-        createdAt: now,
-        updatedAt: now
-      },
-      {
-        id: 'BANK-ADC',
-        name: 'ADC',
-        openingBalance: 0,
-        currentBalance: 0,
-        transactions: [],
-        createdAt: now,
-        updatedAt: now
-      },
-      {
-        id: 'BANK-JIO',
-        name: 'JIO',
-        openingBalance: 0,
-        currentBalance: 0,
-        transactions: [],
-        createdAt: now,
-        updatedAt: now
-      }
-    ];
-
-    const sampleExpenses = [
-      { category: 'HOME', amount: 70, description: 'others', date: '2026-09-28', bankAccount: 'Yes Bank', paymentMethod: 'UPI' },
-      { category: 'HOME', amount: 270, description: 'home food', date: '2026-09-25', bankAccount: 'Yes Bank', paymentMethod: 'UPI' },
-      { category: 'HOME', amount: 300, description: 'child paket', date: '2026-09-20', bankAccount: 'ADC', paymentMethod: 'Cash' },
-      { category: 'BIG-EXPENSE', amount: 900, description: 'recharge', date: '2026-09-15', bankAccount: 'JIO', paymentMethod: 'UPI' },
-      { category: 'BIG-EXPENSE', amount: 2800, description: 'Pr', date: '2026-09-10', bankAccount: 'Yes Bank', paymentMethod: 'UPI' },
-      { category: 'BIG-EXPENSE', amount: 600, description: 'myPersonal', date: '2026-09-12', bankAccount: 'ADC', paymentMethod: 'Card' },
-      { category: 'FOOD', amount: 130, description: 'paket', date: '2026-09-08', bankAccount: 'Yes Bank', paymentMethod: 'UPI' },
-      { category: 'FOOD', amount: 60, description: 'puri', date: '2026-09-09', bankAccount: 'Cash', paymentMethod: 'Cash' },
-      { category: 'FOOD', amount: 540, description: 'other', date: '2026-09-18', bankAccount: 'ADC', paymentMethod: 'UPI' },
-      { category: 'FOOD', amount: 400, description: 'pizza', date: '2026-09-28', bankAccount: 'Yes Bank', paymentMethod: 'UPI' },
-      { category: 'PETROL', amount: 400, description: '07-Sep', date: '2026-09-07', bankAccount: 'Yes Bank', paymentMethod: 'UPI' },
-      { category: 'PETROL', amount: 100, description: 'jupiter', date: '2026-09-14', bankAccount: 'ADC', paymentMethod: 'Cash' },
-      { category: 'PETROL', amount: 960, description: '16-Sep', date: '2026-09-16', bankAccount: 'Yes Bank', paymentMethod: 'UPI' }
-    ];
-
-    data.expenses = sampleExpenses.map((e, i) => ({
-      id: `EXP-SAMPLE-${String(i + 1).padStart(3, '0')}`,
-      date: e.date,
-      month: month,
-      category: e.category,
-      amount: e.amount,
-      description: e.description,
-      paymentMethod: e.paymentMethod,
-      bankAccount: e.bankAccount === 'Cash' ? '' : e.bankAccount,
-      notes: '',
-      isSample: true,
-      createdAt: now,
-      updatedAt: now
-    }));
-
-    data.income = [
-      {
-        id: 'INC-SAMPLE-001',
-        date: '2026-09-05',
-        month: month,
-        type: 'IPO',
-        amount: 3560,
-        description: 'IPO',
-        bankAccount: 'Yes Bank',
-        notes: '',
-        isSample: true,
-        createdAt: now,
-        updatedAt: now
-      }
-    ];
-
-    // Recalculate bank balances from transactions conceptually (opening 0 + income - expenses)
-    recalculateBankBalances(data);
-
-    data.meta.lastSaved = now;
-    data.meta.lastUpdateDate = '2026-09-28';
-    return data;
   }
 
   function recalculateBankBalances(data) {
@@ -158,7 +95,8 @@ const Storage = (() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
-        cache = createSampleData();
+        cache = defaultData();
+        cache.settings.selectedMonth = Utils.currentMonthKey();
         saveData(cache);
         return cache;
       }
@@ -168,16 +106,68 @@ const Storage = (() => {
       cache.version = cache.version || VERSION;
       cache.expenses = cache.expenses || [];
       cache.income = cache.income || [];
+      cache.rpd = cache.rpd || [];
       cache.categories = cache.categories || defaults.categories;
       cache.incomeTypes = cache.incomeTypes || defaults.incomeTypes;
       cache.bankAccounts = cache.bankAccounts || [];
       cache.paymentMethods = cache.paymentMethods || defaults.paymentMethods;
       cache.settings = Object.assign({}, defaults.settings, cache.settings || {});
       cache.meta = Object.assign({}, defaults.meta, cache.meta || {});
+
+      // Remove legacy "RPD Income" from income types (RPD has its own page)
+      const beforeTypes = cache.incomeTypes.length;
+      cache.incomeTypes = cache.incomeTypes.filter(
+        (t) => t.id !== 'INC-RPD' && String(t.name).toLowerCase() !== 'rpd income'
+      );
+      let migrated = cache.incomeTypes.length !== beforeTypes;
+
+      // Ensure default bank accounts JIO, YES, ADC exist
+      const requiredBanks = ['JIO', 'YES', 'ADC'];
+      requiredBanks.forEach((name) => {
+        const exists = cache.bankAccounts.some(
+          (b) => String(b.name).trim().toUpperCase() === name
+        );
+        if (!exists) {
+          cache.bankAccounts.push({
+            id: Utils.generateId('BANK'),
+            name,
+            openingBalance: 0,
+            currentBalance: 0,
+            transactions: [],
+            createdAt: Utils.nowISO(),
+            updatedAt: Utils.nowISO()
+          });
+          migrated = true;
+        }
+      });
+
+      // Remove legacy demo/sample data so the app starts clean
+      if (cache.settings.isSampleData) {
+        cache = defaultData();
+        cache.settings.selectedMonth = Utils.currentMonthKey();
+        saveData(cache);
+        return cache;
+      }
+      const hadSample =
+        cache.expenses.some((e) => e.isSample) || cache.income.some((i) => i.isSample);
+      if (hadSample) {
+        cache.expenses = cache.expenses.filter((e) => !e.isSample);
+        cache.income = cache.income.filter((i) => !i.isSample);
+        cache.settings.isSampleData = false;
+        recalculateBankBalances(cache);
+        migrated = true;
+      }
+
+      if (migrated) {
+        recalculateBankBalances(cache);
+        saveData(cache);
+      }
+
       return cache;
     } catch (err) {
       console.error('Failed to load data:', err);
-      cache = createSampleData();
+      cache = defaultData();
+      cache.settings.selectedMonth = Utils.currentMonthKey();
       return cache;
     }
   }
@@ -231,6 +221,7 @@ const Storage = (() => {
       date: expense.date,
       month: Utils.getMonthKey(expense.date),
       category: expense.category,
+      subcategory: expense.subcategory || '',
       amount: Number(expense.amount),
       description: expense.description || '',
       paymentMethod: expense.paymentMethod || '',
@@ -341,6 +332,63 @@ const Storage = (() => {
     return getData().income.filter((i) => i.month === monthKey);
   }
 
+  /* ---------- RPD ---------- */
+
+  function addRpd(entry) {
+    const data = getData();
+    const record = {
+      id: entry.id || Utils.generateId('RPD'),
+      date: entry.date,
+      month: Utils.getMonthKey(entry.date),
+      amount: Number(entry.amount),
+      type: entry.type,
+      notes: entry.notes || '',
+      createdAt: Utils.nowISO(),
+      updatedAt: Utils.nowISO()
+    };
+    data.rpd.push(record);
+    persist();
+    return record;
+  }
+
+  function updateRpd(id, updates) {
+    const data = getData();
+    const idx = data.rpd.findIndex((r) => r.id === id);
+    if (idx === -1) return null;
+    const existing = data.rpd[idx];
+    data.rpd[idx] = {
+      ...existing,
+      ...updates,
+      id: existing.id,
+      month: Utils.getMonthKey(updates.date || existing.date),
+      amount: Number(updates.amount !== undefined ? updates.amount : existing.amount),
+      updatedAt: Utils.nowISO()
+    };
+    persist();
+    return data.rpd[idx];
+  }
+
+  function deleteRpd(id) {
+    const data = getData();
+    const before = data.rpd.length;
+    data.rpd = data.rpd.filter((r) => r.id !== id);
+    if (data.rpd.length === before) return false;
+    persist();
+    return true;
+  }
+
+  function getRpdById(id) {
+    return getData().rpd.find((r) => r.id === id) || null;
+  }
+
+  function getRpdByMonth(monthKey) {
+    return getData().rpd.filter((r) => r.month === monthKey);
+  }
+
+  function getAllRpd() {
+    return getData().rpd.slice();
+  }
+
   /* ---------- Categories ---------- */
 
   function addCategory(name, color) {
@@ -367,7 +415,7 @@ const Storage = (() => {
     if (!cat) return { error: 'Category not found.' };
     if (cat.isDefault) return { error: 'Default categories cannot be deleted.' };
     const inUse = data.expenses.some((e) => e.category === cat.name);
-    if (inUse) return { error: 'Cannot delete category that has expenses. Reassign them first.' };
+    if (inUse) return { error: 'Cannot delete category that has Expenses. Reassign them first.' };
     data.categories = data.categories.filter((c) => c.id !== id);
     persist();
     return { success: true };
@@ -396,9 +444,9 @@ const Storage = (() => {
     const data = getData();
     const type = data.incomeTypes.find((t) => t.id === id);
     if (!type) return { error: 'Income type not found.' };
-    if (type.isDefault) return { error: 'Default income types cannot be deleted.' };
+    if (type.isDefault) return { error: 'Default Income types cannot be deleted.' };
     const inUse = data.income.some((i) => i.type === type.name);
-    if (inUse) return { error: 'Cannot delete income type that is in use.' };
+    if (inUse) return { error: 'Cannot delete Income type that is in use.' };
     data.incomeTypes = data.incomeTypes.filter((t) => t.id !== id);
     persist();
     return { success: true };
@@ -558,6 +606,7 @@ const Storage = (() => {
       backupDate: Utils.nowISO(),
       expenses: data.expenses,
       income: data.income,
+      rpd: data.rpd,
       categories: data.categories,
       incomeTypes: data.incomeTypes,
       bankAccounts: data.bankAccounts,
@@ -590,7 +639,7 @@ const Storage = (() => {
       return { error: 'Invalid backup file.' };
     }
     if (!Array.isArray(backup.expenses) || !Array.isArray(backup.income)) {
-      return { error: 'Invalid backup file. Missing expenses or income.' };
+      return { error: 'Invalid backup file. Missing Expenses or Income.' };
     }
 
     createSafetyBackup();
@@ -599,6 +648,7 @@ const Storage = (() => {
     data.version = backup.version || VERSION;
     data.expenses = backup.expenses || [];
     data.income = backup.income || [];
+    data.rpd = backup.rpd || [];
     data.categories = backup.categories || data.categories;
     data.incomeTypes = backup.incomeTypes || data.incomeTypes;
     data.bankAccounts = backup.bankAccounts || [];
@@ -629,20 +679,42 @@ const Storage = (() => {
     return localStorage.getItem(LAST_AUTO_BACKUP_KEY) || null;
   }
 
+  function getAutoBackupTime() {
+    const settings = getSettings();
+    const time = settings.autoBackupTime || '20:00';
+    return /^\d{2}:\d{2}$/.test(time) ? time : '20:00';
+  }
+
+  function isPastAutoBackupTime(now = new Date()) {
+    const [hh, mm] = getAutoBackupTime().split(':').map(Number);
+    const minutesNow = now.getHours() * 60 + now.getMinutes();
+    const minutesTarget = hh * 60 + mm;
+    return minutesNow >= minutesTarget;
+  }
+
   function needsAutoBackup() {
     const settings = getSettings();
     if (!settings.autoBackup) return false;
     const last = getLastAutoBackupDate();
-    return last !== Utils.todayISO();
+    if (last === Utils.todayISO()) return false;
+    return isPastAutoBackupTime();
   }
 
-  function clearSampleData() {
-    const data = getData();
-    data.expenses = data.expenses.filter((e) => !e.isSample);
-    data.income = data.income.filter((i) => !i.isSample);
-    data.settings.isSampleData = false;
-    recalculateBankBalances(data);
-    persist();
+  function getNextAutoBackupLabel() {
+    const settings = getSettings();
+    if (!settings.autoBackup) return 'Disabled';
+    const time = getAutoBackupTime();
+    const last = getLastAutoBackupDate();
+    const today = Utils.todayISO();
+    if (last === today) {
+      const next = new Date();
+      next.setDate(next.getDate() + 1);
+      return `${Utils.formatDateDisplay(Utils.formatISODate(next))} at ${time}`;
+    }
+    if (isPastAutoBackupTime()) {
+      return `Today at ${time} (due now)`;
+    }
+    return `Today at ${time}`;
   }
 
   function clearAllData() {
@@ -668,7 +740,6 @@ const Storage = (() => {
     getData,
     saveData,
     persist,
-    createSampleData,
     recalculateBankBalances,
     addExpense,
     updateExpense,
@@ -680,6 +751,12 @@ const Storage = (() => {
     deleteIncome,
     getIncomeById,
     getIncomeByMonth,
+    addRpd,
+    updateRpd,
+    deleteRpd,
+    getRpdById,
+    getRpdByMonth,
+    getAllRpd,
     addCategory,
     deleteCategory,
     getCategories,
@@ -704,8 +781,10 @@ const Storage = (() => {
     restoreFromBackup,
     markBackupDone,
     getLastAutoBackupDate,
+    getAutoBackupTime,
+    isPastAutoBackupTime,
     needsAutoBackup,
-    clearSampleData,
+    getNextAutoBackupLabel,
     clearAllData,
     replaceAllData
   };
