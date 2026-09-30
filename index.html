@@ -505,13 +505,10 @@
                 <input type="file" id="jsonImportFile" accept=".json,application/json" class="d-none">
                 <input type="file" id="jsonUploadToDataFile" accept=".json,application/json" class="d-none">
                 <div class="form-text" id="jsonBackupDesktopHelp">
-                  Optional: <strong>Choose Folder</strong> works in Chrome / Edge / Brave (desktop).
-                  Otherwise files go to the <strong>Downloads</strong> folder.
+                  Tap <strong>Choose Folder</strong> to pick a save location (Chrome).
+                  If your phone does not support it, files go to <strong>Downloads</strong>.
                 </div>
-                <div class="form-text d-none" id="jsonBackupMobileHelp">
-                  On this device (including Brave mobile), files save to the <strong>Downloads</strong> folder.
-                  Use <strong>Restore into App</strong> to load a JSON file back.
-                </div>
+                <div class="form-text d-none" id="jsonBackupMobileHelp"></div>
               </div>
             </div>
           </div>
@@ -521,7 +518,7 @@
               <div class="card-body">
                 <div class="alert alert-warning mb-3" id="backupBrowserAlert">
                   <strong>Note:</strong> Automatic backup runs only while this website tab is open.
-                  In Brave / Chrome / Edge, files go to <strong>Downloads</strong> (or a folder you choose on desktop).
+                  Use <strong>Choose Folder</strong> when available; otherwise files save to <strong>Downloads</strong>.
                 </div>
                 <div class="setting-row">
                   <div class="setting-info">

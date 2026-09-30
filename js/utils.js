@@ -197,13 +197,12 @@ const Utils = (() => {
       (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
   }
 
+  // Show/use folder picker whenever the browser API exists (including Chrome mobile when available)
   function canUseFolderPicker() {
-    return supportsDirectoryPicker() && !isMobileDevice();
+    return supportsDirectoryPicker();
   }
 
   function getMobileDownloadsLabel() {
-    if (/iPhone|iPad|iPod/i.test(navigator.userAgent || '')) return 'Downloads';
-    if (/Android/i.test(navigator.userAgent || '')) return 'Downloads';
     return 'Downloads';
   }
 

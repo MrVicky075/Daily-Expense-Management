@@ -9,7 +9,7 @@ const BackupModule = (() => {
 
   function refreshLocationUI() {
     const settings = Storage.getSettings();
-    const folderOk = Utils.canUseFolderPicker();
+    const folderApiOk = Utils.supportsDirectoryPicker();
     const label = Utils.getBackupLocationLabel(settings);
     const input = document.getElementById('backupLocationInput');
     const status = document.getElementById('settingsBackupLocation');
@@ -24,35 +24,37 @@ const BackupModule = (() => {
     const locationHelp = document.getElementById('backupLocationHelp');
 
     if (input) {
-      input.value = folderOk && settings.backupFolderName ? settings.backupFolderName : '';
-      input.placeholder = 'Downloads folder';
+      input.value = settings.backupFolderName || '';
+      input.placeholder = 'Downloads (default)';
     }
     if (status) status.textContent = label;
     if (timeInput && document.activeElement !== timeInput) timeInput.value = time;
     if (timeStatus) timeStatus.textContent = time;
 
-    // Hide folder picker when not supported — always use Downloads instead
-    if (chooseBtn) chooseBtn.classList.toggle('d-none', !folderOk);
-    if (clearBtn) clearBtn.classList.toggle('d-none', !folderOk);
-    if (uploadBtn) uploadBtn.classList.toggle('d-none', !folderOk);
-    if (desktopHelp) desktopHelp.classList.toggle('d-none', !folderOk);
-    if (mobileHelp) mobileHelp.classList.toggle('d-none', folderOk);
+    // Always show Choose Folder (including Chrome mobile)
+    if (chooseBtn) chooseBtn.classList.remove('d-none');
+    if (clearBtn) clearBtn.classList.remove('d-none');
+    if (uploadBtn) uploadBtn.classList.toggle('d-none', !folderApiOk);
+    if (desktopHelp) desktopHelp.classList.remove('d-none');
+    if (mobileHelp) mobileHelp.classList.add('d-none');
     if (locationHelp) {
-      locationHelp.textContent = folderOk
-        ? 'Optional on Brave/Chrome/Edge desktop: Choose Folder. Otherwise files go to Downloads.'
-        : 'Brave / mobile: files save to your Downloads folder.';
+      locationHelp.textContent = folderApiOk
+        ? 'Tap Choose Folder to pick where backups are saved (Chrome). If not supported, files go to Downloads.'
+        : 'Choose Folder will use Downloads on this browser if folder pick is not supported.';
     }
   }
 
   async function chooseBackupFolder() {
-    // If picker not available, silently keep Downloads — no Chrome/Edge error
-    if (!Utils.canUseFolderPicker()) {
-      refreshLocationUI();
-      return;
-    }
     try {
+      if (!Utils.supportsDirectoryPicker()) {
+        Utils.showToast('Folder pick not available here. Backups will save to Downloads.', 'info');
+        Storage.updateSettings({ backupFolderName: '' });
+        refreshLocationUI();
+        return;
+      }
       const handle = await Utils.chooseBackupDirectory();
       if (!handle) {
+        Utils.showToast('No folder selected. Backups will save to Downloads.', 'info');
         refreshLocationUI();
         return;
       }
@@ -63,7 +65,10 @@ const BackupModule = (() => {
     } catch (err) {
       if (err && err.name === 'AbortError') return;
       console.warn(err);
+      // Chrome mobile often blocks directory picker — fall back quietly to Downloads
+      Storage.updateSettings({ backupFolderName: '' });
       refreshLocationUI();
+      Utils.showToast('Could not open folder picker. Backups will save to Downloads.', 'info');
     }
   }
 
