@@ -9,18 +9,60 @@ const BackupModule = (() => {
 
   function refreshLocationUI() {
     const settings = Storage.getSettings();
+    const folderOk = Utils.canUseFolderPicker();
     const label = Utils.getBackupLocationLabel(settings);
     const input = document.getElementById('backupLocationInput');
     const status = document.getElementById('settingsBackupLocation');
     const timeInput = document.getElementById('autoBackupTime');
     const timeStatus = document.getElementById('settingsBackupTime');
     const time = Storage.getAutoBackupTime();
+    const chooseBtn = document.getElementById('btnChooseBackupFolder');
+    const clearBtn = document.getElementById('btnClearBackupFolder');
+    const uploadBtn = document.getElementById('btnUploadJsonToData');
+    const desktopHelp = document.getElementById('jsonBackupDesktopHelp');
+    const mobileHelp = document.getElementById('jsonBackupMobileHelp');
+    const locationHelp = document.getElementById('backupLocationHelp');
 
-    if (input) input.value = label === 'Browser Downloads' ? '' : label;
-    if (input && !input.value) input.placeholder = 'Browser Downloads (default)';
+    if (input) {
+      input.value = folderOk && settings.backupFolderName ? settings.backupFolderName : '';
+      input.placeholder = folderOk ? 'Browser Downloads (default)' : Utils.getMobileDownloadsLabel();
+    }
     if (status) status.textContent = label;
     if (timeInput && document.activeElement !== timeInput) timeInput.value = time;
     if (timeStatus) timeStatus.textContent = time;
+
+    // Mobile / unsupported browsers: hide folder picker, keep Downloads flow
+    if (chooseBtn) chooseBtn.classList.toggle('d-none', !folderOk);
+    if (clearBtn) clearBtn.classList.toggle('d-none', !folderOk);
+    if (uploadBtn) uploadBtn.classList.toggle('d-none', !folderOk);
+    if (desktopHelp) desktopHelp.classList.toggle('d-none', !folderOk);
+    if (mobileHelp) mobileHelp.classList.toggle('d-none', folderOk);
+    if (locationHelp) {
+      locationHelp.textContent = folderOk
+        ? 'Computer (Chrome/Edge): select the project data folder. Backups and uploads save there.'
+        : 'On mobile, Choose Folder is not available. Download / Auto backup files go to your phone Downloads or Files app.';
+    }
+  }
+
+  async function chooseBackupFolder() {
+    try {
+      if (!Utils.canUseFolderPicker()) {
+        Utils.showToast(
+          'On mobile, folder pick is not available. Use Download JSON — the file saves to your phone Downloads / Files.',
+          'info'
+        );
+        return;
+      }
+      const handle = await Utils.chooseBackupDirectory();
+      Storage.updateSettings({ backupFolderName: handle.name });
+      refreshLocationUI();
+      Dashboard.renderBackupStatus();
+      Utils.showToast(`Backup location set to: ${handle.name}. Tip: choose the project "data" folder.`, 'success');
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      console.error(err);
+      Utils.showToast(err.message || 'Could not choose folder.', 'danger');
+    }
   }
 
   async function exportJSON() {
@@ -31,7 +73,7 @@ const BackupModule = (() => {
     if (result.method === 'folder') {
       Utils.showToast(`JSON backup saved to folder: ${result.folderName}`, 'success');
     } else {
-      Utils.showToast('JSON backup exported to Downloads.', 'success');
+      Utils.showToast(`JSON backup saved to ${Utils.getBackupLocationLabel(Storage.getSettings())}.`, 'success');
     }
     Dashboard.renderBackupStatus();
     refreshLocationUI();
@@ -56,7 +98,7 @@ const BackupModule = (() => {
       if (result.method === 'folder') {
         Utils.showToast(`Automatic daily backup saved to: ${result.folderName}`, 'info');
       } else {
-        Utils.showToast('Automatic daily backup downloaded to Browser Downloads.', 'info');
+        Utils.showToast(`Automatic daily backup saved to ${Utils.getBackupLocationLabel(Storage.getSettings())}.`, 'info');
       }
     } catch (err) {
       console.error('Auto backup failed', err);
@@ -67,7 +109,6 @@ const BackupModule = (() => {
 
   function startAutoBackupScheduler() {
     if (scheduleTimer) clearInterval(scheduleTimer);
-    // Check shortly after open, then every 30s while tab stays open
     setTimeout(() => checkAutoBackup(), 800);
     scheduleTimer = setInterval(() => checkAutoBackup(), 30000);
   }
@@ -76,24 +117,6 @@ const BackupModule = (() => {
     if (scheduleTimer) {
       clearInterval(scheduleTimer);
       scheduleTimer = null;
-    }
-  }
-
-  async function chooseBackupFolder() {
-    try {
-      if (!Utils.supportsDirectoryPicker()) {
-        Utils.showToast('Folder picker needs Chrome or Edge. Files otherwise go to Downloads.', 'warning');
-        return;
-      }
-      const handle = await Utils.chooseBackupDirectory();
-      Storage.updateSettings({ backupFolderName: handle.name });
-      refreshLocationUI();
-      Dashboard.renderBackupStatus();
-      Utils.showToast(`Backup location set to: ${handle.name}. Tip: choose the project "data" folder.`, 'success');
-    } catch (err) {
-      if (err && err.name === 'AbortError') return;
-      console.error(err);
-      Utils.showToast(err.message || 'Could not choose folder.', 'danger');
     }
   }
 
@@ -121,8 +144,11 @@ const BackupModule = (() => {
   async function uploadJsonToDataFolder(file) {
     if (!file) return;
     try {
-      if (!Utils.supportsDirectoryPicker()) {
-        Utils.showToast('Upload to data folder needs Chrome or Edge.', 'warning');
+      if (!Utils.canUseFolderPicker()) {
+        Utils.showToast(
+          'On mobile, use Restore into App to pick a JSON file from your phone. Folder upload is for computer only.',
+          'info'
+        );
         return;
       }
 
@@ -268,7 +294,7 @@ const BackupModule = (() => {
       if (result.method === 'folder') {
         Utils.showToast(`Backup saved to: ${result.folderName}`, 'success');
       } else {
-        Utils.showToast('Backup downloaded to Browser Downloads.', 'success');
+        Utils.showToast(`Backup saved to ${Utils.getBackupLocationLabel(Storage.getSettings())}.`, 'success');
       }
     });
 

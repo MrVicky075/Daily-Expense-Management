@@ -191,6 +191,22 @@ const Utils = (() => {
     return typeof window.showDirectoryPicker === 'function';
   }
 
+  function isMobileDevice() {
+    const ua = navigator.userAgent || '';
+    return /Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i.test(ua) ||
+      (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
+  }
+
+  function canUseFolderPicker() {
+    return supportsDirectoryPicker() && !isMobileDevice();
+  }
+
+  function getMobileDownloadsLabel() {
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent || '')) return 'iPhone Files / Downloads';
+    if (/Android/i.test(navigator.userAgent || '')) return 'Phone Downloads';
+    return 'Device Downloads';
+  }
+
   async function ensureDirectoryPermission(handle, { interactive = false } = {}) {
     if (!handle) return false;
     const opts = { mode: 'readwrite' };
@@ -268,6 +284,9 @@ const Utils = (() => {
   }
 
   function getBackupLocationLabel(settings) {
+    if (!canUseFolderPicker()) {
+      return getMobileDownloadsLabel();
+    }
     const name = settings?.backupFolderName;
     return name ? name : 'Browser Downloads';
   }
@@ -437,6 +456,9 @@ const Utils = (() => {
     getBackupDirectoryHandle,
     clearBackupDirectoryHandle,
     supportsDirectoryPicker,
+    canUseFolderPicker,
+    isMobileDevice,
+    getMobileDownloadsLabel,
     saveJSONBackup,
     uploadFileToBackupFolder,
     writeBlobToBackupFolder,
