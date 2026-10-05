@@ -292,17 +292,61 @@ const ExpenseModule = (() => {
       return;
     }
 
-    const payload = { date, category, subcategory, amount, description, paymentMethod, bankAccount, notes };
+    const normalizedDate = Utils.normalizeDateStr(date);
+    const payload = {
+      date: normalizedDate,
+      category,
+      subcategory,
+      amount,
+      description,
+      paymentMethod,
+      bankAccount,
+      notes
+    };
 
+    let saved;
     if (id) {
-      Storage.updateExpense(id, payload);
+      saved = Storage.updateExpense(id, payload);
+      if (!saved) {
+        Utils.showToast('Could not save expense. Check browser storage.', 'danger');
+        return;
+      }
       Utils.showToast('Expense updated successfully.', 'success');
     } else {
-      Storage.addExpense(payload);
+      saved = Storage.addExpense(payload);
+      if (!saved) {
+        Utils.showToast('Could not save expense. Check browser storage.', 'danger');
+        return;
+      }
       Utils.showToast('Expense added successfully.', 'success');
     }
 
-    bootstrap.Modal.getInstance(document.getElementById('expenseModal')).hide();
+    const expenseMonth = Utils.getMonthKey(normalizedDate);
+    if (Storage.getSelectedMonth() !== expenseMonth) {
+      Storage.setSelectedMonth(expenseMonth);
+      Utils.showToast(`Showing ${Utils.formatMonthLabel(expenseMonth)}`, 'info');
+    }
+
+    if (filters.dateFrom && normalizedDate < filters.dateFrom) {
+      filters.dateFrom = '';
+      const fromEl = document.getElementById('filterDateFrom');
+      if (fromEl) fromEl.value = '';
+    }
+    if (filters.dateTo && normalizedDate > filters.dateTo) {
+      filters.dateTo = '';
+      const toEl = document.getElementById('filterDateTo');
+      if (toEl) toEl.value = '';
+    }
+
+    const modalEl = document.getElementById('expenseModal');
+    try {
+      bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+    } catch (err) {
+      console.warn('Could not close expense modal', err);
+    }
+    if (Utils.isMobileDevice()) {
+      App.navigate('expenses');
+    }
     App.refreshAll();
   }
 
@@ -420,3 +464,6 @@ const ExpenseModule = (() => {
     getFilteredExpenses
   };
 })();
+
+// Inline handlers (e.g. mobile Safari) resolve properties on `window` only.
+window.ExpenseModule = ExpenseModule;

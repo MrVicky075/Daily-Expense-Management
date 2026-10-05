@@ -227,7 +227,7 @@ const BackupModule = (() => {
   async function clearAllData() {
     const ok1 = await Utils.confirmModal({
       title: 'WARNING',
-      message: '<strong>This will permanently remove all locally stored Expense data from this browser.</strong><p class="mb-0 mt-2">A safety backup will be kept briefly in local storage, but you should export a JSON backup first.</p>',
+      message: '<strong>This will permanently remove all locally stored Expense data from this browser.</strong><p class="mb-0 mt-2">Export a JSON backup first if you may need this data later.</p>',
       okText: 'Continue',
       okClass: 'btn-warning'
     });
@@ -242,6 +242,13 @@ const BackupModule = (() => {
     if (!ok2) return;
 
     Storage.clearAllData();
+    try {
+      await Utils.clearBackupDirectoryHandle();
+    } catch (err) {
+      console.warn('Could not clear saved backup folder handle', err);
+    }
+    refreshLocationUI();
+    Dashboard.renderBackupStatus();
     Utils.showToast('All data cleared.', 'warning');
     App.refreshAll();
   }

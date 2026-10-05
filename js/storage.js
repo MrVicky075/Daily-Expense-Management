@@ -121,6 +121,32 @@ const Storage = (() => {
       );
       let migrated = cache.incomeTypes.length !== beforeTypes;
 
+      const syncDatedRecord = (record) => {
+        if (!record || !record.date) return false;
+        const date = Utils.normalizeDateStr(record.date);
+        let changed = false;
+        if (date !== record.date) {
+          record.date = date;
+          changed = true;
+        }
+        const month = Utils.getMonthKey(date);
+        if (record.month !== month) {
+          record.month = month;
+          changed = true;
+        }
+        return changed;
+      };
+
+      cache.expenses.forEach((e) => {
+        if (syncDatedRecord(e)) migrated = true;
+      });
+      cache.income.forEach((i) => {
+        if (syncDatedRecord(i)) migrated = true;
+      });
+      cache.rpd.forEach((r) => {
+        if (syncDatedRecord(r)) migrated = true;
+      });
+
       // Ensure default bank accounts JIO, YES, ADC exist
       const requiredBanks = ['JIO', 'YES', 'ADC'];
       requiredBanks.forEach((name) => {
@@ -214,12 +240,17 @@ const Storage = (() => {
 
   /* ---------- Expenses ---------- */
 
+  function expenseMonthKey(record) {
+    return record.month || Utils.getMonthKey(record.date);
+  }
+
   function addExpense(expense) {
     const data = getData();
+    const date = Utils.normalizeDateStr(expense.date);
     const record = {
       id: expense.id || Utils.generateId('EXP'),
-      date: expense.date,
-      month: Utils.getMonthKey(expense.date),
+      date,
+      month: Utils.getMonthKey(date),
       category: expense.category,
       subcategory: expense.subcategory || '',
       amount: Number(expense.amount),
@@ -233,7 +264,7 @@ const Storage = (() => {
     };
     data.expenses.push(record);
     recalculateBankBalances(data);
-    persist();
+    if (!persist()) return null;
     return record;
   }
 
@@ -242,11 +273,13 @@ const Storage = (() => {
     const idx = data.expenses.findIndex((e) => e.id === id);
     if (idx === -1) return null;
     const existing = data.expenses[idx];
+    const date = Utils.normalizeDateStr(updates.date || existing.date);
     data.expenses[idx] = {
       ...existing,
       ...updates,
       id: existing.id,
-      month: Utils.getMonthKey(updates.date || existing.date),
+      date,
+      month: Utils.getMonthKey(date),
       amount: Number(updates.amount !== undefined ? updates.amount : existing.amount),
       updatedAt: Utils.nowISO()
     };
@@ -270,7 +303,7 @@ const Storage = (() => {
   }
 
   function getExpensesByMonth(monthKey) {
-    return getData().expenses.filter((e) => e.month === monthKey);
+    return getData().expenses.filter((e) => expenseMonthKey(e) === monthKey);
   }
 
   /* ---------- Income ---------- */
@@ -329,7 +362,7 @@ const Storage = (() => {
   }
 
   function getIncomeByMonth(monthKey) {
-    return getData().income.filter((i) => i.month === monthKey);
+    return getData().income.filter((i) => (i.month || Utils.getMonthKey(i.date)) === monthKey);
   }
 
   /* ---------- RPD ---------- */
@@ -382,7 +415,7 @@ const Storage = (() => {
   }
 
   function getRpdByMonth(monthKey) {
-    return getData().rpd.filter((r) => r.month === monthKey);
+    return getData().rpd.filter((r) => (r.month || Utils.getMonthKey(r.date)) === monthKey);
   }
 
   function getAllRpd() {
@@ -717,12 +750,18 @@ const Storage = (() => {
     return `Today at ${time}`;
   }
 
+  function removeAllAppLocalStorageKeys() {
+    Object.keys(localStorage)
+      .filter((k) => k === STORAGE_KEY || k.startsWith('expenseManagement_'))
+      .forEach((k) => localStorage.removeItem(k));
+  }
+
   function clearAllData() {
-    createSafetyBackup();
+    removeAllAppLocalStorageKeys();
     cache = defaultData();
     cache.settings.selectedMonth = Utils.currentMonthKey();
+    cache.meta.createdAt = Utils.nowISO();
     persist();
-    localStorage.removeItem(LAST_AUTO_BACKUP_KEY);
   }
 
   function replaceAllData(newData) {

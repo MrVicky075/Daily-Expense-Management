@@ -33,6 +33,10 @@ const App = (() => {
     if (titleEl) titleEl.textContent = titles[page] || 'Dashboard';
 
     window.scrollTo(0, 0);
+
+    if (page === 'expenses') {
+      ExpenseModule.renderTable();
+    }
   }
 
   function refreshAll() {

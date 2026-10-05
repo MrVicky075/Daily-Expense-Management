@@ -35,9 +35,21 @@ const Utils = (() => {
     return `${y}-${m}-${day}`;
   }
 
-  function getMonthKey(dateStr) {
+  /** Normalize date inputs to YYYY-MM-DD (handles mobile quirks and ISO timestamps). */
+  function normalizeDateStr(dateStr) {
     if (!dateStr) return '';
-    return dateStr.substring(0, 7); // YYYY-MM
+    const s = String(dateStr).trim();
+    const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+    const parsed = new Date(s);
+    if (!isNaN(parsed.getTime())) return formatISODate(parsed);
+    return s;
+  }
+
+  function getMonthKey(dateStr) {
+    const normalized = normalizeDateStr(dateStr);
+    if (!normalized) return '';
+    return normalized.substring(0, 7); // YYYY-MM
   }
 
   function parseMonthKey(monthKey) {
@@ -425,11 +437,11 @@ const Utils = (() => {
       const onOk = () => {
         confirmed = true;
         modal.hide();
-        finish(true);
       };
 
       const onHidden = () => {
-        if (!confirmed) finish(false);
+        okBtn.removeEventListener('click', onOk);
+        finish(confirmed);
       };
 
       okBtn.addEventListener('click', onOk);
@@ -446,6 +458,7 @@ const Utils = (() => {
     nowISO,
     todayISO,
     formatISODate,
+    normalizeDateStr,
     getMonthKey,
     parseMonthKey,
     formatMonthLabel,
